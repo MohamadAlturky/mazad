@@ -37,50 +37,23 @@ public class UpdateCategoryCommandHandler : BaseCommandHandler<UpdateCategoryCom
             });
         }
 
-        // 3. Check for duplicate category names (excluding the current category)
-        var categoryExists = await _context.Categories
-            .AnyAsync(c => (c.NameArabic == command.NameArabic || c.NameEnglish == command.NameEnglish) && c.Id != command.Id);
+        // // 3. Check for duplicate category names (excluding the current category)
+        // var categoryExists = await _context.Categories
+        //     .AnyAsync(c => (c.NameArabic == command.NameArabic || c.NameEnglish == command.NameEnglish) && c.Id != command.Id);
 
-        if (categoryExists)
-        {
-            return Result.Fail(new LocalizedMessage
-            {
-                Arabic = "فئة بنفس الاسم العربي أو الإنجليزي موجودة بالفعل.",
-                English = "A category with the same Arabic or English name already exists."
-            });
-        }
-
-        // 4. Validate ParentId if provided
-        if (command.ParentId.HasValue)
-        {
-            if (command.ParentId.Value == command.Id)
-            {
-                return Result.Fail(new LocalizedMessage
-                {
-                    Arabic = "لا يمكن أن تكون الفئة الأب هي نفسها الفئة.",
-                    English = "Parent category cannot be the category itself."
-                });
-            }
-
-            var parentCategory = await _context.Categories.FirstOrDefaultAsync(e => e.Id == command.ParentId.Value);
-            if (parentCategory is null)
-            {
-                return Result.Fail(new LocalizedMessage
-                {
-                    Arabic = "الفئة الأب غير موجودة.",
-                    English = "The parent category does not exist."
-                });
-            }
-
-            // Optional: Prevent circular dependencies (e.g., A -> B -> A)
-            // This would require a more complex check, potentially traversing the hierarchy.
-            // For simplicity, it's omitted here but good to consider for real-world applications.
-        }
+        // if (categoryExists)
+        // {
+        //     return Result.Fail(new LocalizedMessage
+        //     {
+        //         Arabic = "فئة بنفس الاسم العربي أو الإنجليزي موجودة بالفعل.",
+        //         English = "A category with the same Arabic or English name already exists."
+        //     });
+        // }
 
         // 5. Update category properties
         categoryToUpdate.NameArabic = command.NameArabic ?? categoryToUpdate.NameArabic;
         categoryToUpdate.NameEnglish = command.NameEnglish ?? categoryToUpdate.NameEnglish;
-        categoryToUpdate.ParentId = command.ParentId;
+
 
         // 6. Save changes to the database
         try

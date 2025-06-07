@@ -9,6 +9,7 @@ import axios from 'axios';
 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BaseTable } from '@/types';
+import { toast } from 'sonner';
 
 export interface CategoryFormData {
   nameArabic: string;
@@ -22,14 +23,13 @@ interface CategoryFormProps {
   onSubmit: (data: CategoryFormData) => void;
 }
 
-interface Category extends BaseTable
-{
+interface Category extends BaseTable {
   id: number;
   name: string;
 }
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmit }) => {
-  const { t,language } = useLanguage();
+  const { t, language } = useLanguage();
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CategoryFormData>();
   const [categories, setCategories] = useState<Category[]>([]);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -67,17 +67,23 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
         'Content-Type': 'application/json'
       }
     })
-    .then(response => {
-      console.log('Category created successfully:', response.data);
-      onSubmit({ ...data, parentCategoryId: selectedCategory?.id || null });
-      reset();
-      setSelectedCategory(null);
-      setSearchText('');
-      onOpenChange(false);
-    })
-    .catch(error => {
-      console.error('Error creating category:', error);
-    });
+      .then(response => {
+        if (response.data.success) {
+          toast.success(response.data.message);
+        }
+        else {
+          toast.error(response.data.message);
+        }
+        console.log('Category created successfully:', response.data);
+        onSubmit({ ...data, parentCategoryId: selectedCategory?.id || null });
+        reset();
+        setSelectedCategory(null);
+        setSearchText('');
+        onOpenChange(false);
+      })
+      .catch(error => {
+        console.error('Error creating category:', error);
+      });
   };
 
   const handleClearSelection = (e: React.MouseEvent) => {

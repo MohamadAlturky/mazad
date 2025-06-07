@@ -1,33 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronDown, ChevronRight, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import EditSubcategoryForm from './EditSubcategoryForm';
+import { useParams } from 'react-router-dom';
+import AdminLayout from './AdminLayout';
+
+interface Parent {
+  id: number;
+  name: string;
+  // Add other properties if needed
+}
 
 interface SubcategoryItem {
   id: number;
   name: string;
+  nameArabic: string;
+  nameEnglish: string;
   isActive: boolean;
   children?: SubcategoryItem[];
 }
 
-interface SubcategoriesProps {
-  parent: any;
-  onBack: () => void;
-  type: 'region' | 'category';
-}
-
-const Subcategories: React.FC<SubcategoriesProps> = ({ parent, onBack, type }) => {
+const Subcategories: React.FC = () => {
+  const { id } = useParams();
   const { t, isRTL, language } = useLanguage();
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [subcategories, setSubcategories] = useState<SubcategoryItem[]>([]);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<SubcategoryItem | null>(null);
 
   useEffect(() => {
     const fetchSubcategories = async () => {
       try {
-        const response = await fetch('http://localhost:5032/api/categories/tree/1', {
+        const response = await fetch(`http://localhost:5032/api/categories/tree/${id}`, {
           headers: {
             'Accept-Language': language,
           },
@@ -42,7 +50,7 @@ const Subcategories: React.FC<SubcategoriesProps> = ({ parent, onBack, type }) =
     };
 
     fetchSubcategories();
-  }, [language]);
+  }, [language, id]);
 
   const toggleExpanded = (id: number) => {
     const newExpanded = new Set(expandedItems);
@@ -52,6 +60,17 @@ const Subcategories: React.FC<SubcategoriesProps> = ({ parent, onBack, type }) =
       newExpanded.add(id);
     }
     setExpandedItems(newExpanded);
+  };
+
+  const handleEdit = (item: SubcategoryItem) => {
+    setSelectedSubcategory(item);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = (data: { nameArabic: string; nameEnglish: string; }) => {
+    // Update the subcategory in the state or refetch the data
+    console.log('Updated subcategory:', data);
+    window.location.reload();
   };
 
   const renderSubcategoryItem = (item: SubcategoryItem, level: number = 0) => {
@@ -86,6 +105,14 @@ const Subcategories: React.FC<SubcategoriesProps> = ({ parent, onBack, type }) =
               <div className="w-4" />
             )}
             <span className="font-medium text-purple-900">{item.name}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEdit(item)}
+              className="text-purple-600 hover:bg-purple-50 ml-2"
+            >
+              <Edit className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
+            </Button>
           </div>
 
           <Badge
@@ -106,28 +133,11 @@ const Subcategories: React.FC<SubcategoriesProps> = ({ parent, onBack, type }) =
   };
 
   return (
+    <AdminLayout>
+
     <Card className="border-purple-200">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBack}
-              className="text-purple-600 hover:bg-purple-50"
-            >
-              <ArrowLeft className={cn("h-4 w-4", isRTL ? "rotate-180" : "")} />
-            </Button>
-            <CardTitle className="text-purple-900">
-              {type === 'region' ? t('subRegions') : t('subcategories')} - {parent.name}
-            </CardTitle>
-          </div>
-
-          {/* <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-            <Plus className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
-            {type === 'region' ? t('addSubRegion') : t('addSubcategory')}
-          </Button> */}
-        </div>
+        <CardTitle className="text-purple-900"> {t('subcategories')} </CardTitle>
       </CardHeader>
 
       <CardContent>
@@ -135,7 +145,17 @@ const Subcategories: React.FC<SubcategoriesProps> = ({ parent, onBack, type }) =
           {subcategories.map(item => renderSubcategoryItem(item))}
         </div>
       </CardContent>
+
+      {selectedSubcategory && (
+        <EditSubcategoryForm
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSubmit={handleEditSubmit}
+          subcategory={selectedSubcategory}
+        />
+      )}
     </Card>
+    </AdminLayout>
   );
 };
 

@@ -7,7 +7,6 @@ public class UpdateCategoryCommand : BaseCommand
     public int Id { get; set; }
     public string? NameArabic { get; set; }
     public string? NameEnglish { get; set; }
-    public int? ParentId { get; set; }
 }
 
 public class UpdateCategoryApiRequest : BaseApiRequest<UpdateCategoryCommand>
@@ -15,7 +14,6 @@ public class UpdateCategoryApiRequest : BaseApiRequest<UpdateCategoryCommand>
     public int Id { get; set; }
     public string? NameArabic { get; set; }
     public string? NameEnglish { get; set; }
-    public int? ParentId { get; set; }
 
     public override UpdateCategoryCommand ToCommand(int userId, string language)
     {
@@ -24,7 +22,6 @@ public class UpdateCategoryApiRequest : BaseApiRequest<UpdateCategoryCommand>
             Id = Id,
             NameArabic = NameArabic,
             NameEnglish = NameEnglish,
-            ParentId = ParentId,
             UserId = userId,
             Language = language
         };

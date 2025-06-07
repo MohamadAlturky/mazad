@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import DataTable from '@/components/DataTable';
-import Subcategories from '@/components/Subcategories';
 import CategoryForm from '@/components/CategoryForm';
 import AdminLayout from '@/components/AdminLayout';
 import axios from 'axios';
 import { Category } from '../types'; // Assuming you have a Category type defined
 import { CategoryFormData } from '@/components/CategoryForm';
-import { Bounce, toast } from 'react-toastify';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 const Categories: React.FC = () => {
   const { t, language } = useLanguage();
@@ -101,18 +99,7 @@ const Categories: React.FC = () => {
         setIsRefetching(isRefetching => !isRefetching);
         // window.location.reload();
       } else {
-        toast.error(response.data.message , {
-          position: "bottom-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: false,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-          className: "w-auto",
-          transition: Bounce
-        });
+        toast.error(response.data.message);
       }
     } catch (error) {
       toast.error(t('errorDeletingCategory'));
@@ -135,20 +122,13 @@ const Categories: React.FC = () => {
 
   const handleToggleActivation = async (category: Category) => {
     try {
-      const response = await axios.put(`http://localhost:5032/api/categories/toggle-activation/${category.id}`);
+      const response = await axios.put(`http://localhost:5032/api/categories/toggle-activation/${category.id}`, null, {
+        headers: {
+          'Accept-Language': language,
+        },
+      });
       if (response.data.success) {
-        toast.success(response.data.message, {
-          position: "bottom-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: false,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-          className: "w-auto",
-          transition: Bounce
-        });
+        toast.success(response.data.message);
         setCategories((prevCategories) =>
           prevCategories.map((cat) =>
             cat.id === category.id ? { ...cat, isActive: !cat.isActive } : cat
@@ -166,43 +146,43 @@ const Categories: React.FC = () => {
     setCurrentPage(newPage);
   };
 
+  // Add a link to navigate to the Subcategories page
+  const renderCategoryLink = (category: Category) => (
+    <Link to={`/subcategories/${category.id}`} className="text-blue-500 hover:underline">
+      {t('viewSubcategories')}
+    </Link>
+  );
+
   return (
     <AdminLayout>
-      <ToastContainer />
       {isLoading ? (
         <div>{t('loading')}</div>
-      ) : viewMode === 'list' ? (
-        <>
-          <DataTable
-            title={t('categories')}
-            columns={columns}
-            data={categories}
-            onAdd={handleAdd}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onView={handleView}
-            onViewSubcategories={handleViewSubcategories}
-            onToggleActivation={handleToggleActivation}
-            addButtonText={t('addCategory')}
-            showSubcategoriesAction={true}
-            currentPage={currentPage}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-          />
-          <CategoryForm
-            open={isFormOpen}
-            onOpenChange={setIsFormOpen}
-            onSubmit={handleFormSubmit}
-          />
-        </>
-      ) : (
-        <Subcategories
-          parent={selectedCategory}
-          onBack={handleBackToList}
-          type="category"
+      ) : <>
+        <DataTable
+          title={t('categories')}
+          columns={columns}
+          data={categories}
+          onAdd={handleAdd}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onView={handleView}
+          onViewSubcategories={(category) => {
+            window.location.href = `/subcategories/${category.id}`;
+          }}
+          onToggleActivation={handleToggleActivation}
+          addButtonText={t('addCategory')}
+          showSubcategoriesAction={true}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
         />
-      )}
+        <CategoryForm
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          onSubmit={handleFormSubmit}
+        />
+      </>}
     </AdminLayout>
   );
 };
