@@ -71,6 +71,7 @@ const translations = {
     // Activation Toggle
     activate: 'تفعيل',
     deactivate: 'إلغاء تفعيل',
+    noParent: 'فئة أساسية بدون أب',
   },
   en: {
     // App Name
@@ -129,6 +130,7 @@ const translations = {
     totalCategories: 'Total Categories',
     toggleActivation: 'Toggle Activation',
     errorTogglingActivation: 'Error toggling activation',
+    noParent: 'base category with no parent',
   }
 };
 

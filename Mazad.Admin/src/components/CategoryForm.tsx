@@ -43,12 +43,14 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
       }
     })
       .then(response => {
-        setCategories(response.data.data);
+        const fetchedCategories = response.data.data;
+        const newCategory = { id: null, name: t('noParent') };
+        setCategories([...fetchedCategories, newCategory]);
       })
       .catch(error => {
         console.error('Error fetching categories:', error);
       });
-  }, [language]);
+  }, [language, t]);
 
   useEffect(() => {
     setValue('parentCategoryId', selectedCategory ? selectedCategory.id : null);
@@ -130,27 +132,65 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="parentCategory" className="text-purple-700 text-base font-medium">{t('parentCategory')}</Label>
-            <Select onValueChange={(value) => {
-              const category = categories.find(cat => cat.id.toString() === value);
-              setSelectedCategory(category || null);
-            }}>
-              <SelectTrigger className="w-full justify-between border-purple-300 text-purple-700 hover:bg-purple-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 ease-in-out rounded-md p-2">
-                <SelectValue placeholder={t('selectParentCategory')} />
+          <div className="space-y-2 w-full">
+            <Label htmlFor="parentCategory" className="w-full text-purple-800 text-lg font-semibold tracking-wide">
+              {t('parentCategory')}
+            </Label>
+            <Select>
+              <SelectTrigger
+                className={`
+        w-full 
+        text-center 
+        border-2 
+        border-gray-300 
+        rounded-lg 
+        py-2 
+        px-4 
+        text-gray-700 
+        transition-all 
+        duration-200 
+        ease-in-out
+        hover:border-purple-600 
+        focus:outline-none 
+        focus:ring-2 
+        focus:ring-purple-500 
+        focus:border-transparent 
+        ${language === 'ar' ? 'text-right' : 'text-left'}
+      `}
+              >
+                <SelectValue placeholder={t('noParent')} />
               </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectGroup>
-                  <SelectLabel>{t('categories')}</SelectLabel>
-                  <SelectItem value="none" onSelect={() => setSelectedCategory(null)}>{language === 'ar' ? 'فئة اساسية بدون أب' : 'base category with no parent'}</SelectItem>
+              <SelectContent
+                className={`
+        bg-white 
+        rounded-lg 
+        shadow-xl 
+        border 
+        border-gray-200 
+        mt-1 
+        ${language === 'ar' ? 'text-right' : 'text-left'}
+      `}
+              >
+                <SelectGroup className={`bg-white ${language === 'ar' ? 'text-right' : 'text-left'}`}>
+                  <SelectLabel className="px-4 py-2 text-purple-600 font-medium text-sm border-b border-gray-100">
+                    {t('categories')}
+                  </SelectLabel>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>{category.name}</SelectItem>
+                    <SelectItem
+                      key={category.id}
+                      value={category.id != null ? category.id.toString() : null}
+                      className={`
+                        flex py-2 px-4 cursor-pointer text-gray-800 transition-colors duration-150 ease-in-out hover:bg-purple-100 hover:text-purple-800 focus:bg-purple-100 focus:text-purple-800 outline-none ${language === 'ar' ? 'justify-end' : 'justify-start'}
+              ${language === 'ar' ? 'justify-end' : 'justify-start'}
+            `}
+                    >
+                      {category.name}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
           </div>
-
           <DialogFooter className="flex justify-end space-x-3 pt-4">
             <Button
               type="button"
