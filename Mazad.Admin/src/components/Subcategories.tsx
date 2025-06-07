@@ -105,14 +105,14 @@ const Subcategories: React.FC = () => {
               <div className="w-4" />
             )}
             <span className="font-medium text-purple-900">{item.name}</span>
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               onClick={() => handleEdit(item)}
               className="text-purple-600 hover:bg-purple-50 ml-2"
             >
               <Edit className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
-            </Button>
+            </Button> */}
           </div>
 
           <Badge
@@ -151,7 +151,8 @@ const Subcategories: React.FC = () => {
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           onSubmit={handleEditSubmit}
-          subcategory={selectedSubcategory}
+          id={selectedSubcategory.id}
+          // subcategory={selectedSubcategory}
         />
       )}
     </Card>

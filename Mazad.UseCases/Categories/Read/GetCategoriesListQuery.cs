@@ -24,12 +24,13 @@ public class GetCategoriesListQueryHandler : BaseQueryHandler<GetCategoriesListQ
 
     public override async Task<Result<GetCategoriesListQueryResponse>> Handle(GetCategoriesListQuery query)
     {
-        var queryable = _context.Categories.Where(c => c.ParentId == null).AsNoTracking();
+        var queryable = _context.Categories.Include(c => c.ParentCategory).AsNoTracking();
         if (query.FilterByIsActiveEquals.HasValue)
         {
             queryable = queryable.Where(c => c.IsActive == query.FilterByIsActiveEquals.Value);
         }
         var allCategories = await queryable
+        .OrderByDescending(c => c.Id)
         .Skip((query.PageNumber - 1) * query.PageSize)
         .Take(query.PageSize)
         .ToListAsync();
@@ -39,10 +40,7 @@ public class GetCategoriesListQueryHandler : BaseQueryHandler<GetCategoriesListQ
         var categoryDtos = new List<CategoryListDto>();
         foreach (var category in allCategories)
         {
-            if (category.ParentId == null)
-            {
-                categoryDtos.Add(MapCategoryToDto(category, query.Language));
-            }
+            categoryDtos.Add(MapCategoryToDto(category, query.Language));
         }
 
         return Result<GetCategoriesListQueryResponse>.Ok(new GetCategoriesListQueryResponse
@@ -62,6 +60,7 @@ public class GetCategoriesListQueryHandler : BaseQueryHandler<GetCategoriesListQ
         {
             Id = category.Id,
             Name = language == "ar" ? category.NameArabic : category.NameEnglish,
+            ParentName = language == "ar" ? category.ParentCategory?.NameArabic ?? "لا يوجد" : category.ParentCategory?.NameEnglish ?? "No parent",
             IsActive = category.IsActive
         };
         return categoryDto;
@@ -72,6 +71,7 @@ public class CategoryListDto
 {
     public required int Id { get; set; }
     public required string Name { get; set; } = string.Empty;
+    public required string ParentName { get; set; } = string.Empty;
     public required bool IsActive { get; set; }
 }
 

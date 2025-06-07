@@ -9,6 +9,7 @@ import { Category } from '../types'; // Assuming you have a Category type define
 import { CategoryFormData } from '@/components/CategoryForm';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import EditSubcategoryForm from '@/components/EditSubcategoryForm';
 
 const Categories: React.FC = () => {
   const { t, language } = useLanguage();
@@ -21,6 +22,7 @@ const Categories: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [isRefetching, setIsRefetching] = useState<boolean>(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -52,6 +54,7 @@ const Categories: React.FC = () => {
 
   const columns = [
     { key: 'name', label: t('name') },
+    { key: 'parentName', label: t('parentName') },
     {
       key: 'isActive',
       label: t('status'),
@@ -69,7 +72,11 @@ const Categories: React.FC = () => {
   const handleAdd = () => {
     setIsFormOpen(true);
   };
-
+  const handleEditSubmit = (data: { nameArabic: string; nameEnglish: string; }) => {
+    // Update the subcategory in the state or refetch the data
+    console.log('Updated subcategory:', data);
+    window.location.reload();
+  };
   const handleFormSubmit = (data: CategoryFormData) => {
     console.log('Create new category:', data);
     setIsRefetching(isRefetching => !isRefetching);
@@ -77,6 +84,8 @@ const Categories: React.FC = () => {
 
   const handleEdit = (category: Category) => {
     console.log('Edit category:', category);
+    setEditMode(true);
+    setSelectedCategory(category);
   };
 
   const handleDelete = async (category: Category) => {
@@ -183,6 +192,14 @@ const Categories: React.FC = () => {
           onSubmit={handleFormSubmit}
         />
       </>}
+      {editMode && (
+        <EditSubcategoryForm
+          open={editMode}
+          onOpenChange={setEditMode}
+          onSubmit={handleEditSubmit}
+          id={selectedCategory?.id}
+        />
+      )}
     </AdminLayout>
   );
 };

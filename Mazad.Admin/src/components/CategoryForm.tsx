@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 export interface CategoryFormData {
   nameArabic: string;
   nameEnglish: string;
-  parentCategoryId?: number | null;
+  parentId: number | null;
 }
 
 interface CategoryFormProps {
@@ -52,16 +52,18 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
       });
   }, [language, t]);
 
-  useEffect(() => {
-    setValue('parentCategoryId', selectedCategory ? selectedCategory.id : null);
-  }, [selectedCategory, setValue]);
+  // useEffect(() => {
+  //   setValue('parentCategory', selectedCategory ? selectedCategory.id : null);
+  //   console.log('selectedCategory', selectedCategory);
+  // }, [selectedCategory, setValue]);
 
   const handleFormSubmit = (data: CategoryFormData) => {
     const requestData = {
       nameArabic: data.nameArabic,
       nameEnglish: data.nameEnglish,
-      parentId: selectedCategory?.id || null
+      parentId: data.parentId
     };
+    console.log('requestData', requestData);
 
     axios.post('http://localhost:5032/api/categories', requestData, {
       headers: {
@@ -77,7 +79,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
           toast.error(response.data.message);
         }
         console.log('Category created successfully:', response.data);
-        onSubmit({ ...data, parentCategoryId: selectedCategory?.id || null });
+        onSubmit({ ...data});
         reset();
         setSelectedCategory(null);
         setSearchText('');
@@ -136,28 +138,28 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
             <Label htmlFor="parentCategory" className="w-full text-purple-800 text-lg font-semibold tracking-wide">
               {t('parentCategory')}
             </Label>
-            <Select>
-              <SelectTrigger
-                className={`
-        w-full 
-        text-center 
-        border-2 
-        border-gray-300 
-        rounded-lg 
-        py-2 
-        px-4 
-        text-gray-700 
-        transition-all 
-        duration-200 
-        ease-in-out
-        hover:border-purple-600 
-        focus:outline-none 
-        focus:ring-2 
-        focus:ring-purple-500 
-        focus:border-transparent 
-        ${language === 'ar' ? 'text-right' : 'text-left'}
-      `}
-              >
+            <Select onValueChange={(value) => {
+              setValue('parentId', value ? parseInt(value) : null);
+              console.log('parentCategoryId', value);
+            }}>
+              <SelectTrigger className={`w-full 
+                text-center 
+                border-2 
+                border-gray-300 
+                rounded-lg 
+                py-2 
+                px-4 
+                text-gray-700 
+                transition-all 
+                duration-200 
+                ease-in-out
+                hover:border-purple-600 
+                focus:outline-none 
+                focus:ring-2 
+                focus:ring-purple-500 
+                focus:border-transparent 
+                ${language === 'ar' ? 'text-right' : 'text-left'}
+              `}>
                 <SelectValue placeholder={t('noParent')} />
               </SelectTrigger>
               <SelectContent
@@ -179,11 +181,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
                     <SelectItem
                       key={category.id}
                       value={category.id != null ? category.id.toString() : null}
-                      className={`
-                        flex py-2 px-4 cursor-pointer text-gray-800 transition-colors duration-150 ease-in-out hover:bg-purple-100 hover:text-purple-800 focus:bg-purple-100 focus:text-purple-800 outline-none ${language === 'ar' ? 'justify-end' : 'justify-start'}
-              ${language === 'ar' ? 'justify-end' : 'justify-start'}
-            `}
-                    >
+                      className={`flex py-2 px-4 cursor-pointer text-gray-800 transition-colors duration-150 ease-in-out hover:bg-purple-100 hover:text-purple-800 focus:bg-purple-100 focus:text-purple-800 outline-none ${language === 'ar' ? 'justify-end' : 'justify-start'}${language === 'ar' ? 'justify-end' : 'justify-start'}`}>
                       {category.name}
                     </SelectItem>
                   ))}

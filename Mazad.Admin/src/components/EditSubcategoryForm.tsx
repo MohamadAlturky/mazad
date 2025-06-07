@@ -17,21 +17,21 @@ interface EditSubcategoryFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EditSubcategoryFormData) => void;
-  subcategory: { id: number; nameArabic: string; nameEnglish: string; };
+  id: number;
 }
 
-const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenChange, onSubmit, subcategory }) => {
+const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenChange, onSubmit, id }) => {
   const { t, language } = useLanguage();
   const { register, handleSubmit, reset, formState: { errors } } = useForm<EditSubcategoryFormData>({
     defaultValues: {
-      nameArabic: subcategory.nameArabic,
-      nameEnglish: subcategory.nameEnglish,
+      nameArabic: '',
+      nameEnglish: '',
     }
   });
 
   const handleFormSubmit = (data: EditSubcategoryFormData) => {
     const requestData = {
-      id: subcategory.id,
+      id: id,
       nameArabic: data.nameArabic,
       nameEnglish: data.nameEnglish,
     };
@@ -116,4 +116,4 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
   );
 };
 
-export default EditSubcategoryForm; 
+export default EditSubcategoryForm;

@@ -10,6 +10,7 @@ import Regions from "./pages/Regions";
 import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 import Subcategories from "./components/Subcategories";
+import CategoriesTree from "./components/CategoriesTree";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,8 @@ const App = () => (
             <Route path="/regions" element={<Regions />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/subcategories/:id" element={<Subcategories/>} />
+            <Route path="/categories-tree" element={<CategoriesTree />} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

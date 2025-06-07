@@ -72,6 +72,11 @@ const translations = {
     activate: 'تفعيل',
     deactivate: 'إلغاء تفعيل',
     noParent: 'فئة أساسية بدون أب',
+    
+    // New Key for Categories Tree
+    categoriesTree: 'شجرة الفئات',
+    parentName: 'الفئة الأب',
+    noDataAvailable: 'لا يوجد بيانات متاحة',
   },
   en: {
     // App Name
@@ -131,6 +136,11 @@ const translations = {
     toggleActivation: 'Toggle Activation',
     errorTogglingActivation: 'Error toggling activation',
     noParent: 'base category with no parent',
+    
+    // New Key for Categories Tree
+    categoriesTree: 'Categories Tree',
+    parentName: 'Parent Category',
+    noDataAvailable: 'No data available',
   }
 };
 
