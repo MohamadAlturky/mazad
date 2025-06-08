@@ -95,35 +95,35 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-white p-6 rounded-lg shadow-lg">
+      <DialogContent className="sm:max-w-[425px] bg-card p-6 rounded-lg shadow-lg">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-purple-800">{t('editSubcategory')}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-foreground">{t('editSubcategory')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="nameArabic" className="text-purple-700 text-base font-medium">{t('nameArabic')}</Label>
+            <Label htmlFor="nameArabic" className="text-foreground text-base font-medium">{t('nameArabic')}</Label>
             <Input
               id="nameArabic"
               {...register('nameArabic', { required: t('nameArabicRequired') })}
-              className="border-purple-300 focus:border-purple-500 focus:ring-purple-500 rounded-md p-2 text-gray-800"
+              className="border-border focus:border-primary focus:ring-primary rounded-md p-2 text-foreground bg-background"
               placeholder={t('enterNameArabic')}
             />
             {errors.nameArabic && (
-              <p className="text-red-600 text-sm mt-1">{errors.nameArabic.message}</p>
+              <p className="text-destructive text-sm mt-1">{errors.nameArabic.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nameEnglish" className="text-purple-700 text-base font-medium">{t('nameEnglish')}</Label>
+            <Label htmlFor="nameEnglish" className="text-foreground text-base font-medium">{t('nameEnglish')}</Label>
             <Input
               id="nameEnglish"
               {...register('nameEnglish', { required: t('nameEnglishRequired') })}
-              className="border-purple-300 focus:border-purple-500 focus:ring-purple-500 rounded-md p-2 text-gray-800"
+              className="border-border focus:border-primary focus:ring-primary rounded-md p-2 text-foreground bg-background"
               placeholder={t('enterNameEnglish')}
             />
             {errors.nameEnglish && (
-              <p className="text-red-600 text-sm mt-1">{errors.nameEnglish.message}</p>
+              <p className="text-destructive text-sm mt-1">{errors.nameEnglish.message}</p>
             )}
           </div>
 
@@ -135,21 +135,21 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
                 onOpenChange(false);
                 reset();
               }}
-              className="border-purple-300 text-purple-700 hover:bg-purple-100 px-4 py-2 rounded-md transition-colors duration-200 ml-3"
+              className="border-border text-foreground hover:bg-accent px-4 py-2 rounded-md transition-colors duration-200 ml-3"
             >
               {t('cancel')}
             </Button>
             {isLoading ? (
               <Button
                 type="submit"
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-colors duration-200"
               >
                 {t('loading')} ...
               </Button>
             ) : (
               <Button
                 type="submit"
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-colors duration-200"
               >
                 {t('save')}
               </Button>

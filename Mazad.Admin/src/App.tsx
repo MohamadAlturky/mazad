@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import Users from "./pages/Users";
 // import Regions from "./pages/Regions";
@@ -18,26 +19,30 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <LanguageProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/users" element={<Users />} />
-            {/* <Route path="/regions" element={<Regions />} /> */}
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/subcategories/:id" element={<Subcategories/>} />
-            <Route path="/categories-tree" element={<CategoriesTree />} />
-            <Route path="/dynamic-attributes" element={<DynamicAttributes />} />
-            <Route path="/attributes/:categoryId" element={<CategoryAttributes />} />
+    <ThemeProvider>
+      <TooltipProvider>
+        <LanguageProvider>
+          <div className="min-h-screen bg-background text-foreground transition-colors">
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/users" element={<Users />} />
+                {/* <Route path="/regions" element={<Regions />} /> */}
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/subcategories/:id" element={<Subcategories/>} />
+                <Route path="/categories-tree" element={<CategoriesTree />} />
+                <Route path="/dynamic-attributes" element={<DynamicAttributes />} />
+                <Route path="/attributes/:categoryId" element={<CategoryAttributes />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </LanguageProvider>
-    </TooltipProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </div>
+        </LanguageProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
