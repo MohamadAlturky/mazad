@@ -5,30 +5,34 @@ import DataTable from '@/components/DataTable';
 import Subcategories from '@/components/Subcategories';
 import RegionForm from '@/components/RegionForm';
 import AdminLayout from '@/components/AdminLayout';
+import { BaseTable, Region, RegionFormData } from '@/types';
 
 const Regions: React.FC = () => {
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<'list' | 'subcategories'>('list');
-  const [selectedRegion, setSelectedRegion] = useState<any>(null);
+  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Mock data
-  const regions = [
+  const regions: Region[] = [
     {
       id: 1,
       name: 'الرياض',
+      isActive: true,
       status: 'active',
       createdAt: '2024-01-15',
     },
     {
       id: 2,
       name: 'جدة',
+      isActive: true,
       status: 'active',
       createdAt: '2024-01-10',
     },
     {
       id: 3,
       name: 'الدمام',
+      isActive: false,
       status: 'inactive',
       createdAt: '2024-01-08',
     },
@@ -36,7 +40,8 @@ const Regions: React.FC = () => {
     ...Array.from({ length: 12 }, (_, i) => ({
       id: i + 4,
       name: `Region ${i + 4}`,
-      status: i % 3 === 0 ? 'inactive' : 'active',
+      isActive: i % 3 === 0 ? false : true,
+      status: i % 3 === 0 ? 'inactive' : 'active' as const,
       createdAt: `2024-01-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
     })),
   ];
@@ -46,7 +51,7 @@ const Regions: React.FC = () => {
     {
       key: 'status',
       label: t('status'),
-      render: (status: string) => (
+      render: (status: Region['status']) => (
         <Badge
           variant={status === 'active' ? 'default' : 'secondary'}
           className={status === 'active' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}
@@ -61,24 +66,24 @@ const Regions: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = (data: RegionFormData) => {
     console.log('Create new region:', data);
     // Here you would typically call an API to create the region
   };
 
-  const handleEdit = (region: any) => {
+  const handleEdit = (region: Region) => {
     console.log('Edit region:', region);
   };
 
-  const handleDelete = (region: any) => {
+  const handleDelete = (region: Region) => {
     console.log('Delete region:', region);
   };
 
-  const handleView = (region: any) => {
+  const handleView = (region: Region) => {
     console.log('View region:', region);
   };
 
-  const handleViewSubcategories = (region: any) => {
+  const handleViewSubcategories = (region: Region) => {
     setSelectedRegion(region);
     setViewMode('subcategories');
   };
@@ -89,7 +94,7 @@ const Regions: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout loading={false}>
       {viewMode === 'list' ? (
         <>
           <DataTable
@@ -99,23 +104,32 @@ const Regions: React.FC = () => {
             onAdd={handleAdd}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            showtree={true}
+            currentPage={1}
+            onPageChange={() => {}}
+            pageSize={10}
             onView={handleView}
+            totalCount={regions.length}
+            isLoading={false}
+            onToggleActivation={() => {}}
+            key={`regions-${viewMode}`}
             onViewSubcategories={handleViewSubcategories}
             addButtonText={t('addRegion')}
             showSubcategoriesAction={true}
           />
-          <RegionForm
+          {/* <RegionForm
             open={isFormOpen}
             onOpenChange={setIsFormOpen}
             onSubmit={handleFormSubmit}
-          />
+          /> */}
         </>
       ) : (
-        <Subcategories
-          parent={selectedRegion}
-          onBack={handleBackToList}
-          type="region"
-        />
+        <></>
+        // <Subcategories
+        //   parent={selectedRegion}
+        //   onBack={handleBackToList}
+        //   type="region"
+        // />
       )}
     </AdminLayout>
   );

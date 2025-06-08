@@ -17,13 +17,14 @@ public class DynamicAttributeController : BaseController
     private readonly DeleteDynamicAttributeCommandHandler _deleteDynamicAttributeCommandHandler;
     private readonly GetAllDynamicAttributesQueryHandler _getAllDynamicAttributesQueryHandler;
     private readonly ToggleDynamicAttributeCommandHandler _toggleDynamicAttributeCommandHandler;
-
+    private readonly GetDynamicAttributesBasicInfoQueryHandler _getDynamicAttributesBasicInfoQueryHandler;
     public DynamicAttributeController(
         CreateDynamicAttributeCommandHandler createDynamicAttributeCommandHandler,
         UpdateDynamicAttributeCommandHandler updateDynamicAttributeCommandHandler,
         DeleteDynamicAttributeCommandHandler deleteDynamicAttributeCommandHandler,
         GetAllDynamicAttributesQueryHandler getAllDynamicAttributesQueryHandler,
-        ToggleDynamicAttributeCommandHandler toggleDynamicAttributeCommandHandler
+        ToggleDynamicAttributeCommandHandler toggleDynamicAttributeCommandHandler,
+        GetDynamicAttributesBasicInfoQueryHandler getDynamicAttributesBasicInfoQueryHandler
     )
     {
         _createDynamicAttributeCommandHandler = createDynamicAttributeCommandHandler;
@@ -31,6 +32,7 @@ public class DynamicAttributeController : BaseController
         _deleteDynamicAttributeCommandHandler = deleteDynamicAttributeCommandHandler;
         _getAllDynamicAttributesQueryHandler = getAllDynamicAttributesQueryHandler;
         _toggleDynamicAttributeCommandHandler = toggleDynamicAttributeCommandHandler;
+        _getDynamicAttributesBasicInfoQueryHandler = getDynamicAttributesBasicInfoQueryHandler;
     }
 
     [HttpGet]
@@ -78,6 +80,13 @@ public class DynamicAttributeController : BaseController
             UserId = GetUserId()
         };
         var result = await _toggleDynamicAttributeCommandHandler.Handle(command);
+        return Represent(result);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetBasicInfo(int id)
+    {
+        var result = await _getDynamicAttributesBasicInfoQueryHandler.Handle(new GetDynamicAttributesBasicInfoQuery { Id = id, Language = GetLanguage(), UserId = GetUserId() });
         return Represent(result);
     }
 }

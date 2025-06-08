@@ -23,24 +23,34 @@ public class GetAllDynamicAttributesQueryHandler : BaseQueryHandler<GetAllDynami
     {
         var attributes = await _context.DynamicAttributes
             .AsNoTracking() // Use AsNoTracking for read-only operations for performance
-            .Select(a => new DynamicAttributeDto
+            .Select(a => new DynamicAttributeDbDto
             {
                 Id = a.Id,
                 Name = query.Language == "ar" ? a.NameArabic : a.NameEnglish,
                 IsActive = a.IsActive,
                 AttributeValueType = a.AttributeValueType,
-                AttributeValueTypeString = RepresentAttributeValueType(a.AttributeValueType, query.Language)
             })
             .ToListAsync();
+        var attributesDtos = attributes.Select(a => new DynamicAttributeDto
+        {
+            Id = a.Id,
+            Name = a.Name,
+            IsActive = a.IsActive,
+            AttributeValueType = a.AttributeValueType,
+            AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(a.AttributeValueType, query.Language)
+        }).ToList();
 
-        return Result<List<DynamicAttributeDto>>.Ok(attributes, new LocalizedMessage
+        return Result<List<DynamicAttributeDto>>.Ok(attributesDtos, new LocalizedMessage
         {
             Arabic = "تم الحصول على جميع السمات بنجاح",
             English = "All attributes retrieved successfully"
         });
     }
+}
 
-    private string RepresentAttributeValueType(AttributeValueType attributeValueType, string language)
+public static class DynamicAttributeHelper
+{
+    public static string RepresentAttributeValueType(AttributeValueType attributeValueType, string language)
     {
         if (language == "ar")
         {
@@ -56,7 +66,7 @@ public class GetAllDynamicAttributesQueryHandler : BaseQueryHandler<GetAllDynami
         {
             return attributeValueType switch
             {
-                AttributeValueType.String => "String",
+                AttributeValueType.String => "Text",
                 AttributeValueType.Number => "Number",
                 AttributeValueType.Boolean => "True/False",
                 _ => "Unknown"
@@ -72,4 +82,11 @@ public class DynamicAttributeDto
     public required bool IsActive { get; set; }
     public required AttributeValueType AttributeValueType { get; set; }
     public required string AttributeValueTypeString { get; set; }
+}
+public class DynamicAttributeDbDto
+{
+    public required int Id { get; set; }
+    public required string Name { get; set; }
+    public required bool IsActive { get; set; }
+    public required AttributeValueType AttributeValueType { get; set; }
 }

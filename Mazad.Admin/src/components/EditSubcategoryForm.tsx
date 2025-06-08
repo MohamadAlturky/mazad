@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Riple } from 'react-loading-indicators';
 import { Category } from '@/types';
 
 interface EditSubcategoryFormData {
@@ -31,6 +32,33 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
       nameEnglish: '',
     }
   });
+
+  useEffect(() => {
+    if (id) {
+      const fetchSubcategory = async () => {
+        try {
+          const response = await axios.get(`http://localhost:5032/api/categories/${id}`, {
+            headers: {
+              'Accept-Language': language,
+            },
+          });
+
+          if (response.data.success) {
+            const subcategory = response.data.data;
+            reset({
+              nameArabic: subcategory.nameArabic,
+              nameEnglish: subcategory.nameEnglish,
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching subcategory:', error);
+          toast.error(t('errorFetchingSubcategory'));
+        }
+      };
+
+      fetchSubcategory();
+    }
+  }, [id, language, reset, t]);
 
   const handleFormSubmit = (data: EditSubcategoryFormData) => {
     const requestData = {
@@ -58,6 +86,7 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
       })
       .catch(error => {
         console.error('Error updating subcategory:', error);
+        toast.error(t('errorUpdatingSubcategory'));
       })
       .finally(() => {
         setIsLoading(false);
@@ -110,24 +139,21 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
             >
               {t('cancel')}
             </Button>
-            {isLoading ? <>
+            {isLoading ? (
               <Button
                 type="submit"
                 className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
               >
                 {t('loading')} ...
               </Button>
-            </> : <>
+            ) : (
               <Button
                 type="submit"
                 className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
               >
                 {t('save')}
               </Button>
-            </>}
-
-
-
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

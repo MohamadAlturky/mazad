@@ -20,6 +20,7 @@ public class CategoryController : BaseController
     private readonly GetCategoriesListQueryHandler _getCategoriesListQueryHandler;
     private readonly ToggleCategoryActivationCommandHandler _toggleCategoryActivationCommandHandler;
     private readonly GetCategoriesTreeByOneQueryHandler _getCategoriesTreeByOneQueryHandler;
+    private readonly GetCategoryBasicInfoQueryHandler _getCategoryBasicInfoQueryHandler;
 
     public CategoryController(
         CreateCategoryCommandHandler createCategoryCommandHandler,
@@ -29,7 +30,8 @@ public class CategoryController : BaseController
         GetCategoriesDropdownQueryHandler getCategoriesDropdownQueryHandler,
         GetCategoriesListQueryHandler getCategoriesListQueryHandler,
         GetCategoriesTreeByOneQueryHandler getCategoriesTreeByOneQueryHandler,
-        ToggleCategoryActivationCommandHandler toggleCategoryActivationCommandHandler
+        ToggleCategoryActivationCommandHandler toggleCategoryActivationCommandHandler,
+        GetCategoryBasicInfoQueryHandler getCategoryBasicInfoQueryHandler
     )
     {
         _createCategoryCommandHandler = createCategoryCommandHandler;
@@ -40,6 +42,7 @@ public class CategoryController : BaseController
         _getCategoriesListQueryHandler = getCategoriesListQueryHandler;
         _getCategoriesTreeByOneQueryHandler = getCategoriesTreeByOneQueryHandler;
         _toggleCategoryActivationCommandHandler = toggleCategoryActivationCommandHandler;
+        _getCategoryBasicInfoQueryHandler = getCategoryBasicInfoQueryHandler;
     }
 
     [HttpGet]
@@ -123,6 +126,18 @@ public class CategoryController : BaseController
         var result = await _getCategoriesTreeByOneQueryHandler.Handle(new GetCategoriesTreeByOneQuery
         {
             CategoryId = id,
+            Language = GetLanguage(),
+            UserId = GetUserId()
+        });
+        return Represent(result);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetBasicInfo(int id)
+    {
+        var result = await _getCategoryBasicInfoQueryHandler.Handle(new GetCategoryBasicInfoQuery
+        { 
+            Id = id,
             Language = GetLanguage(),
             UserId = GetUserId()
         });

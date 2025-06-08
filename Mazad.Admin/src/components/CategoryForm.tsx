@@ -192,7 +192,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
                     <SelectItem
                       key={category.id}
                       value={category.id != null ? category.id.toString() : null}
-                      className={`flex py-2 px-4 cursor-pointer text-gray-800 transition-colors duration-150 ease-in-out hover:bg-purple-100 hover:text-purple-800 focus:bg-purple-100 focus:text-purple-800 outline-none ${language === 'ar' ? 'justify-end' : 'justify-start'}${language === 'ar' ? 'justify-end' : 'justify-start'}`}>
+                      className={`flex py-2 px-8 cursor-pointer text-gray-800 transition-colors duration-150 ease-in-out hover:bg-purple-100 hover:text-purple-800 focus:bg-purple-100 focus:text-purple-800 outline-none ${language === 'ar' ? 'justify-end' : 'justify-start'}${language === 'ar' ? 'justify-end' : 'justify-start'}`}>
                       {category.name}
                     </SelectItem>
                   ))}

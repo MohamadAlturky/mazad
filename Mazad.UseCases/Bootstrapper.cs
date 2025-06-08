@@ -30,17 +30,18 @@ public static class Bootstrapper
         services.AddScoped(typeof(GetCategoriesDropdownQueryHandler));
         services.AddScoped(typeof(GetCategoriesListQueryHandler));
         services.AddScoped(typeof(GetCategoriesTreeByOneQueryHandler));
+        services.AddScoped(typeof(GetCategoryBasicInfoQueryHandler));
 
         // Dynamic Attributes services
-        /// commands
+            /// commands
         services.AddScoped(typeof(CreateDynamicAttributeCommandHandler));
         services.AddScoped(typeof(UpdateDynamicAttributeCommandHandler));
         services.AddScoped(typeof(DeleteDynamicAttributeCommandHandler));
         services.AddScoped(typeof(ToggleDynamicAttributeCommandHandler));
 
-        /// queries
+            /// queries
         services.AddScoped(typeof(GetAllDynamicAttributesQueryHandler));
-
+        services.AddScoped(typeof(GetDynamicAttributesBasicInfoQueryHandler));
         return services;
     }
 }

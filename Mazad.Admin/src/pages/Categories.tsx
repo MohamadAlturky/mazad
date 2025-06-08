@@ -192,6 +192,7 @@ const Categories: React.FC = () => {
           pageSize={pageSize}
           totalCount={totalCount}
           onPageChange={handlePageChange}
+          showtree={true}
         />
         <CategoryForm
           open={isFormOpen}

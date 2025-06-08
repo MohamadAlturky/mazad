@@ -6,11 +6,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Users from "./pages/Users";
-import Regions from "./pages/Regions";
+// import Regions from "./pages/Regions";
 import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 import Subcategories from "./components/Subcategories";
 import CategoriesTree from "./components/CategoriesTree";
+import DynamicAttributes from "./pages/DynamicAttributes";
 
 const queryClient = new QueryClient();
 
@@ -24,10 +25,11 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/users" element={<Users />} />
-            <Route path="/regions" element={<Regions />} />
+            {/* <Route path="/regions" element={<Regions />} /> */}
             <Route path="/categories" element={<Categories />} />
             <Route path="/subcategories/:id" element={<Subcategories/>} />
             <Route path="/categories-tree" element={<CategoriesTree />} />
+            <Route path="/dynamic-attributes" element={<DynamicAttributes />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

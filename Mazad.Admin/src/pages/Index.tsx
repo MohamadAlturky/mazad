@@ -8,7 +8,7 @@ const Index = () => {
   const { t } = useLanguage();
 
   return (
-    <AdminLayout>
+    <AdminLayout loading={false}>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="mb-8">

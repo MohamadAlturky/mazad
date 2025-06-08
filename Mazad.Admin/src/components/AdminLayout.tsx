@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Globe, Users, MapPin, Grid3X3 } from 'lucide-react';
+import { Menu, Globe, Users, MapPin, Grid3X3, ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -18,8 +18,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, loading }) => {
   const menuItems = [
     { icon: Grid3X3, label: t('dashboard'), href: '/' },
     { icon: Users, label: t('users'), href: '/users' },
-    { icon: MapPin, label: t('regions'), href: '/regions' },
+    // { icon: MapPin, label: t('regions'), href: '/regions' },
     { icon: Grid3X3, label: t('categories'), href: '/categories' },
+    { icon: ListFilter, label: t('dynamicAttributes'), href: '/dynamic-attributes' },
   ];
 
   return (

@@ -21,6 +21,7 @@ const translations = {
     regions: 'المناطق',
     categories: 'الفئات',
     settings: 'الإعدادات',
+    dynamicAttributes: 'السمات الديناميكية',
     
     // Actions
     add: 'إضافة',
@@ -33,10 +34,13 @@ const translations = {
     
     // Table Headers
     name: 'الاسم',
+    nameEnglish: 'الاسم بالإنجليزية',
+    nameArabic: 'الاسم بالعربية',
     email: 'البريد الإلكتروني',
     status: 'الحالة',
     createdAt: 'تاريخ الإنشاء',
     actions: 'الإجراءات',
+    type: 'النوع',
     
     // Status
     active: 'نشط',
@@ -52,13 +56,25 @@ const translations = {
     addUser: 'إضافة مستخدم جديد',
     addRegion: 'إضافة منطقة جديدة',
     addCategory: 'إضافة فئة جديدة',
+    addAttribute: 'إضافة سمة جديدة',
+    editAttribute: 'تعديل السمة',
     code: 'رمز',
     codeRequired: 'الرمز مطلوب',
     enterRegionCode: 'أدخل رمز المنطقة',
     nameRequired: 'الاسم مطلوب',
     enterRegionName: 'أدخل اسم المنطقة',
+    enterName: 'أدخل الاسم',
+    enterNameArabic: 'أدخل الاسم بالعربية',
+    enterNameEnglish: 'أدخل الاسم بالإنجليزية',
     addSubcategory: 'إضافة فئة فرعية',
+    editSubcategory: 'تعديل الفئة ',
+    parentCategory: 'الفئة الأب',
     subcategories: 'الفئات الفرعية',
+    selectType: 'اختر النوع',
+    text: 'نص',
+    number: 'رقم',
+    boolean: 'قيمة منطقية',
+    date: 'تاريخ',
     
     // Welcome
     welcome: 'مرحباً بك في',
@@ -77,6 +93,14 @@ const translations = {
     categoriesTree: 'شجرة الفئات',
     parentName: 'الفئة الأب',
     noDataAvailable: 'لا يوجد بيانات متاحة',
+
+    // Dynamic Attributes Messages
+    errorFetchingAttributes: 'حدث خطأ أثناء جلب السمات',
+    errorCreatingAttribute: 'حدث خطأ أثناء إنشاء السمة',
+    errorUpdatingAttribute: 'حدث خطأ أثناء تحديث السمة',
+    errorDeletingAttribute: 'حدث خطأ أثناء حذف السمة',
+    attributeDeletedSuccessfully: 'تم حذف السمة بنجاح',
+    attributeValueType: 'النوع',
   },
   en: {
     // App Name
@@ -89,6 +113,7 @@ const translations = {
     regions: 'Regions',
     categories: 'Categories',
     settings: 'Settings',
+    dynamicAttributes: 'Dynamic Attributes',
     
     // Actions
     add: 'Add',
@@ -101,10 +126,13 @@ const translations = {
     
     // Table Headers
     name: 'Name',
+    nameEnglish: 'Name in English',
+    nameArabic: 'Name in Arabic',
     email: 'Email',
     status: 'Status',
     createdAt: 'Created At',
     actions: 'Actions',
+    type: 'Type',
     
     // Status
     active: 'Active',
@@ -120,13 +148,25 @@ const translations = {
     addUser: 'Add New User',
     addRegion: 'Add New Region',
     addCategory: 'Add New Category',
+    addAttribute: 'Add New Attribute',
+    editAttribute: 'Edit Attribute',
     code: 'Code',
     codeRequired: 'Code is required',
     enterRegionCode: 'Enter region code',
     nameRequired: 'Name is required',
     enterRegionName: 'Enter region name',
-    addSubcategory: 'Add Subcategory',
+    enterName: 'Enter name',
+    enterNameArabic: 'Enter name in Arabic',
+    enterNameEnglish: 'Enter name in English',
+    addSubcategory: 'Add category',
+    editSubcategory: 'Edit category',
+    parentCategory: 'Parent Category',
     subcategories: 'sub categories',
+    selectType: 'Select type',
+    text: 'Text',
+    number: 'Number',
+    boolean: 'Boolean',
+    date: 'Date',
     
     // Welcome
     welcome: 'Welcome to',
@@ -141,6 +181,14 @@ const translations = {
     categoriesTree: 'Categories Tree',
     parentName: 'Parent Category',
     noDataAvailable: 'No data available',
+
+    // Dynamic Attributes Messages
+    errorFetchingAttributes: 'Error fetching attributes',
+    errorCreatingAttribute: 'Error creating attribute',
+    errorUpdatingAttribute: 'Error updating attribute',
+    errorDeletingAttribute: 'Error deleting attribute',
+    attributeDeletedSuccessfully: 'Attribute deleted successfully',
+    attributeValueType: 'type',
   }
 };
 
