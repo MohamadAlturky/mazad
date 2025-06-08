@@ -14,7 +14,7 @@ public class MazadDbContext : DbContext
     // DbSet for your Category entity
     public DbSet<Category> Categories { get; set; }
     public DbSet<DynamicAttribute> DynamicAttributes { get; set; }
-    public DbSet<CategoryAttributes> CategoryDynamicAttributes { get; set; }
+    public DbSet<CategoryAttribute> CategoryAttributes { get; set; }
 
     // You can add other DbSets for other entities here
 

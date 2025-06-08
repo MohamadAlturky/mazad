@@ -10,5 +10,5 @@ public class Category : BaseEntity<int>
     public int? ParentId { get; set; }
     public Category? ParentCategory { get; set; } = null;
     public ICollection<Category> Children { get; set; } = [];
-    public ICollection<CategoryAttributes> CategoryAttributes { get; set; } = [];
+    public ICollection<CategoryAttribute> CategoryAttributes { get; set; } = [];
 }

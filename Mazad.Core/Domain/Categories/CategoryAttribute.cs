@@ -2,7 +2,7 @@ using Mazad.Core.Shared.Entities;
 
 namespace Mazad.Core.Domain.Categories;
 
-public class CategoryAttributes : BaseEntity<int>
+public class CategoryAttribute : BaseEntity<int>
 {
     public int CategoryId { get; set; }
     public int DynamicAttributeId { get; set; }
