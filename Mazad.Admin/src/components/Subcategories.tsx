@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, ChevronDown, ChevronRight, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
-import EditSubcategoryForm from './EditSubcategoryForm';
 import { useParams } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 
@@ -105,14 +103,6 @@ const Subcategories: React.FC = () => {
               <div className="w-4" />
             )}
             <span className="font-medium text-purple-900">{item.name}</span>
-            {/* <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(item)}
-              className="text-purple-600 hover:bg-purple-50 ml-2"
-            >
-              <Edit className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
-            </Button> */}
           </div>
 
           <Badge
@@ -145,16 +135,6 @@ const Subcategories: React.FC = () => {
           {subcategories.map(item => renderSubcategoryItem(item))}
         </div>
       </CardContent>
-
-      {selectedSubcategory && (
-        <EditSubcategoryForm
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          onSubmit={handleEditSubmit}
-          id={selectedSubcategory.id}
-          // subcategory={selectedSubcategory}
-        />
-      )}
     </Card>
     </AdminLayout>
   );

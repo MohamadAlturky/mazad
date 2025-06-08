@@ -10,6 +10,7 @@ import axios from 'axios';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BaseTable } from '@/types';
 import { toast } from 'sonner';
+import { Riple } from 'react-loading-indicators';
 
 export interface CategoryFormData {
   nameArabic: string;
@@ -35,8 +36,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
   const [openCombobox, setOpenCombobox] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [searchText, setSearchText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     axios.get('http://localhost:5032/api/categories/dropdown', {
       headers: {
         'Accept-Language': language
@@ -49,8 +52,11 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
       })
       .catch(error => {
         console.error('Error fetching categories:', error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-  }, [language, t]);
+  }, [language, setIsLoading, t]);
 
   // useEffect(() => {
   //   setValue('parentCategory', selectedCategory ? selectedCategory.id : null);
@@ -63,6 +69,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
       nameEnglish: data.nameEnglish,
       parentId: data.parentId
     };
+    setIsLoading(true);
     console.log('requestData', requestData);
 
     axios.post('http://localhost:5032/api/categories', requestData, {
@@ -79,7 +86,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
           toast.error(response.data.message);
         }
         console.log('Category created successfully:', response.data);
-        onSubmit({ ...data});
+        onSubmit({ ...data });
         reset();
         setSelectedCategory(null);
         setSearchText('');
@@ -87,6 +94,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
       })
       .catch(error => {
         console.error('Error creating category:', error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
 
@@ -203,12 +213,20 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
             >
               {t('cancel')}
             </Button>
-            <Button
+            {isLoading ? <Button
               type="submit"
               className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
             >
-              {t('create')}
-            </Button>
+              {t('loading')} ...
+            </Button> :
+              <>
+                <Button
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  {t('create')}
+                </Button>
+              </>}
           </DialogFooter>
         </form>
       </DialogContent>

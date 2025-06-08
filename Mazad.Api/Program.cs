@@ -29,7 +29,7 @@ builder.Services.AddDbContext<MazadDbContext>((serviceProvider, options) =>
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.AddScoped<DelayMiddleware>();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Mazad API Documentation", Version = "v1" });
@@ -89,7 +89,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseMiddleware<DelayMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseAuthentication(); // Must be before UseAuthorization
@@ -100,3 +100,14 @@ app.UseCors("AllowAll");
 app.MapControllers();
 
 app.Run();
+
+public class DelayMiddleware : IMiddleware
+{
+    private readonly int _delay = 2000;
+
+    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
+    {
+        await Task.Delay(_delay);
+        await next(context);
+    }
+}

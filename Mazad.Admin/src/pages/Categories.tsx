@@ -10,6 +10,10 @@ import { CategoryFormData } from '@/components/CategoryForm';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import EditSubcategoryForm from '@/components/EditSubcategoryForm';
+import {
+  Atom,
+  Riple
+} from 'react-loading-indicators';
 
 const Categories: React.FC = () => {
   const { t, language } = useLanguage();
@@ -75,7 +79,7 @@ const Categories: React.FC = () => {
   const handleEditSubmit = (data: { nameArabic: string; nameEnglish: string; }) => {
     // Update the subcategory in the state or refetch the data
     console.log('Updated subcategory:', data);
-    window.location.reload();
+    setIsRefetching(isRefetching => !isRefetching);
   };
   const handleFormSubmit = (data: CategoryFormData) => {
     console.log('Create new category:', data);
@@ -90,6 +94,7 @@ const Categories: React.FC = () => {
 
   const handleDelete = async (category: Category) => {
     try {
+      setIsLoading(true);
       const response = await axios.delete('http://localhost:5032/api/categories', {
         headers: {
           'Accept-Language': language,
@@ -106,12 +111,13 @@ const Categories: React.FC = () => {
         );
         toast.success(response.data.message || t('categoryDeletedSuccessfully'));
         setIsRefetching(isRefetching => !isRefetching);
-        // window.location.reload();
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       toast.error(t('errorDeletingCategory'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -131,6 +137,7 @@ const Categories: React.FC = () => {
 
   const handleToggleActivation = async (category: Category) => {
     try {
+      setIsLoading(true);
       const response = await axios.put(`http://localhost:5032/api/categories/toggle-activation/${category.id}`, null, {
         headers: {
           'Accept-Language': language,
@@ -148,6 +155,8 @@ const Categories: React.FC = () => {
       }
     } catch (error) {
       toast.error(t('errorTogglingActivation'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -163,10 +172,8 @@ const Categories: React.FC = () => {
   );
 
   return (
-    <AdminLayout>
-      {isLoading ? (
-        <div>{t('loading')}</div>
-      ) : <>
+    <AdminLayout loading={isLoading}>
+      <>
         <DataTable
           title={t('categories')}
           columns={columns}
@@ -191,7 +198,7 @@ const Categories: React.FC = () => {
           onOpenChange={setIsFormOpen}
           onSubmit={handleFormSubmit}
         />
-      </>}
+      </>
       {editMode && (
         <EditSubcategoryForm
           open={editMode}

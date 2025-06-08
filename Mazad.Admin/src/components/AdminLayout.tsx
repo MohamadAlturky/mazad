@@ -7,9 +7,10 @@ import { useLocation, Link } from 'react-router-dom';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+  loading: boolean;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children, loading }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { language, setLanguage, t, isRTL } = useLanguage();
   const location = useLocation();
@@ -35,7 +36,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            
+
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">م</span>
@@ -75,7 +76,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   className={cn(
                     "flex items-center p-3 rounded-lg transition-colors",
                     location.pathname === item.href
-                      ? "bg-purple-100 text-purple-900" 
+                      ? "bg-purple-100 text-purple-900"
                       : "text-purple-700 hover:bg-purple-50"
                   )}
                 >
@@ -96,11 +97,22 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         <div className="p-6">
           {children}
         </div>
+        {loading && (
+          <div className="fixed inset-0 top-16 bg-gray-50 bg-opacity-75 flex items-center justify-center" style={{ zIndex: 1000 }}>
+            <div className="flex items-center justify-center p-4 rounded-lg shadow-lg bg-white">
+              <span className="text-purple-700 font-medium mr-1">{t('loading')}...</span>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Overlay for mobile */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
