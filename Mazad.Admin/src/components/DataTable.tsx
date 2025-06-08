@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Trash2, Eye, Plus, Search, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Edit, Trash2, Eye, Plus, Search, ChevronRight, ChevronLeft, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { BaseTable } from '@/types';
 import { Link } from 'react-router-dom';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Column {
   key: string;
@@ -25,8 +31,10 @@ interface DataTableProps {
   onDelete?: (row: BaseTable) => void;
   onView?: (row: BaseTable) => void;
   onViewSubcategories?: (row: BaseTable) => void;
+  onViewAttributes?: (row: BaseTable) => void;
   addButtonText?: string;
   showSubcategoriesAction?: boolean;
+  showAttributesAction?: boolean;
   isLoading?: boolean;
   onToggleActivation?: (row: BaseTable) => void;
   currentPage: number;
@@ -98,8 +106,10 @@ const DataTable: React.FC<DataTableProps> = ({
   onDelete,
   onView,
   onViewSubcategories,
+  onViewAttributes,
   addButtonText,
   showSubcategoriesAction = false,
+  showAttributesAction = false,
   isLoading = false,
   onToggleActivation,
   currentPage,
@@ -205,23 +215,40 @@ const DataTable: React.FC<DataTableProps> = ({
             </div>
 
             {onAdd && (
-              <Button
-                onClick={onAdd}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                <Plus className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
-                {addButtonText || t('add')}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={onAdd}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      <Plus className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
+                      {addButtonText || t('add')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('addNew')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
 
-            {/* New Link to /categories-tree */}
-            {showtree && <>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
-                <Link to="/categories-tree">
-                  {t('categoriesTree')}
-                </Link>
-              </Button>
-            </>}
+            {showtree && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
+                      <Link to="/categories-tree">
+                        {t('categoriesTree')}
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('viewCategoriesTree')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -277,49 +304,93 @@ const DataTable: React.FC<DataTableProps> = ({
                     ))}
                     <td className={cn("py-3 px-5 align-middle min-w-[140px]", isRTL ? "text-center" : "text-center")}>
                       <div className="flex items-center justify-center gap-2">
-                        {showSubcategoriesAction && onViewSubcategories && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onViewSubcategories(row)}
-                            className="text-purple-600 hover:bg-purple-100"
-                          >
-                            <Eye className="h-4 w-4" />
-
-                            {/* {language === 'ar' ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />} */}
-
-                          </Button>
-                        )}
-                        {onEdit && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onEdit(row)}
-                            className="text-purple-600 hover:bg-purple-100"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {onDelete && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onDelete(row)}
-                            className="text-red-600 hover:bg-red-100"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {onToggleActivation && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onToggleActivation(row)}
-                            className="text-yellow-600 hover:bg-yellow-100 w-24"
-                          >
-                            <span >{row.isActive ? t('deactivate') : t('activate')}</span>
-                          </Button>
-                        )}
+                        <TooltipProvider>
+                          {showSubcategoriesAction && onViewSubcategories && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onViewSubcategories(row)}
+                                  className="text-purple-600 hover:bg-purple-100"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-purple-600 bg-white border-purple-200">
+                                <p>{t('viewSubcategories')}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {showAttributesAction && onViewAttributes && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onViewAttributes(row)}
+                                  className="text-purple-600 hover:bg-purple-100"
+                                >
+                                  <ListChecks className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-purple-600 bg-white border-purple-200">
+                                <p>{t('viewAttributes')}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {onEdit && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onEdit(row)}
+                                  className="text-purple-600 hover:bg-purple-100"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-purple-600 bg-white border-purple-200">
+                                <p>{t('edit')}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {onDelete && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onDelete(row)}
+                                  className="text-red-600 hover:bg-red-100"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-purple-600 bg-white border-purple-200">
+                                <p>{t('delete')}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {onToggleActivation && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onToggleActivation(row)}
+                                  className="text-yellow-600 hover:bg-yellow-100 w-24"
+                                >
+                                  <span>{row.isActive ? t('deactivate') : t('activate')}</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-purple-600 bg-white border-purple-200">
+                                <p>{row.isActive ? t('deactivateItem') : t('activateItem')}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </TooltipProvider>
                       </div>
                     </td>
                   </tr>

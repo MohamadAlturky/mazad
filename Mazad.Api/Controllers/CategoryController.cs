@@ -5,6 +5,8 @@ using Mazad.UseCases.Categories.Read;
 using Mazad.UseCases.Categories.Update;
 using Mazad.UseCases.Categories.Toggle;
 using Microsoft.AspNetCore.Mvc;
+using Mazad.UseCases.CategoryDomain.CategoryAttributes.Read;
+using Mazad.UseCases.CategoryDomain.CategoryAttributes.Toggle;
 
 namespace Mazad.Api.Controllers;
 
@@ -21,7 +23,8 @@ public class CategoryController : BaseController
     private readonly ToggleCategoryActivationCommandHandler _toggleCategoryActivationCommandHandler;
     private readonly GetCategoriesTreeByOneQueryHandler _getCategoriesTreeByOneQueryHandler;
     private readonly GetCategoryBasicInfoQueryHandler _getCategoryBasicInfoQueryHandler;
-
+    private readonly GetDynamicAttributesByCategoryIdQueryHandler _getDynamicAttributesByCategoryIdQueryHandler;
+    private readonly ToggleCategoryAttributeCommandHandler _toggleCategoryAttributeCommandHandler;
     public CategoryController(
         CreateCategoryCommandHandler createCategoryCommandHandler,
         UpdateCategoryCommandHandler updateCategoryCommandHandler,
@@ -31,7 +34,9 @@ public class CategoryController : BaseController
         GetCategoriesListQueryHandler getCategoriesListQueryHandler,
         GetCategoriesTreeByOneQueryHandler getCategoriesTreeByOneQueryHandler,
         ToggleCategoryActivationCommandHandler toggleCategoryActivationCommandHandler,
-        GetCategoryBasicInfoQueryHandler getCategoryBasicInfoQueryHandler
+        GetCategoryBasicInfoQueryHandler getCategoryBasicInfoQueryHandler,
+        GetDynamicAttributesByCategoryIdQueryHandler getDynamicAttributesByCategoryIdQueryHandler,
+        ToggleCategoryAttributeCommandHandler toggleCategoryAttributeCommandHandler
     )
     {
         _createCategoryCommandHandler = createCategoryCommandHandler;
@@ -43,6 +48,8 @@ public class CategoryController : BaseController
         _getCategoriesTreeByOneQueryHandler = getCategoriesTreeByOneQueryHandler;
         _toggleCategoryActivationCommandHandler = toggleCategoryActivationCommandHandler;
         _getCategoryBasicInfoQueryHandler = getCategoryBasicInfoQueryHandler;
+        _getDynamicAttributesByCategoryIdQueryHandler = getDynamicAttributesByCategoryIdQueryHandler;
+        _toggleCategoryAttributeCommandHandler = toggleCategoryAttributeCommandHandler;
     }
 
     [HttpGet]
@@ -141,6 +148,32 @@ public class CategoryController : BaseController
             Language = GetLanguage(),
             UserId = GetUserId()
         });
+        return Represent(result);
+    }
+
+    [HttpGet("attributes/{id}")]
+    public async Task<IActionResult> GetDynamicAttributesByCategoryId(int id)
+    {
+        var result = await _getDynamicAttributesByCategoryIdQueryHandler.Handle(new GetDynamicAttributesByCategoryIdQuery
+        {
+            CategoryId = id,
+            Language = GetLanguage(),
+            UserId = GetUserId()
+        });
+        return Represent(result);
+    }
+
+    [HttpPut("attributes/{categoryId}/{dynamicAttributeId}")]
+    public async Task<IActionResult> ToggleCategoryAttribute(int categoryId, int dynamicAttributeId)
+    {
+        var command = new ToggleCategoryAttributeCommand
+        {
+            CategoryId = categoryId,
+            DynamicAttributeId = dynamicAttributeId,
+            Language = GetLanguage(),
+            UserId = GetUserId()
+        };
+        var result = await _toggleCategoryAttributeCommandHandler.Handle(command);
         return Represent(result);
     }
 }

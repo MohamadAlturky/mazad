@@ -3,6 +3,10 @@ using Mazad.UseCases.Categories.Delete;
 using Mazad.UseCases.Categories.Read;
 using Mazad.UseCases.Categories.Toggle;
 using Mazad.UseCases.Categories.Update;
+using Mazad.UseCases.CategoryDomain.CategoryAttributes.Create;
+using Mazad.UseCases.CategoryDomain.CategoryAttributes.Delete;
+using Mazad.UseCases.CategoryDomain.CategoryAttributes.Read;
+using Mazad.UseCases.CategoryDomain.CategoryAttributes.Toggle;
 using Mazad.UseCases.CategoryDomain.DynamicAttributes.Create;
 using Mazad.UseCases.CategoryDomain.DynamicAttributes.Delete;
 using Mazad.UseCases.CategoryDomain.DynamicAttributes.Read;
@@ -42,6 +46,16 @@ public static class Bootstrapper
             /// queries
         services.AddScoped(typeof(GetAllDynamicAttributesQueryHandler));
         services.AddScoped(typeof(GetDynamicAttributesBasicInfoQueryHandler));
+
+        // Category Attributes services
+            /// commands
+        services.AddScoped(typeof(CreateCategoryAttributeCommandHandler));
+        services.AddScoped(typeof(DeleteCategoryAttributeCommandHandler));
+        services.AddScoped(typeof(ToggleCategoryAttributeCommandHandler));
+
+            /// queries
+        services.AddScoped(typeof(GetDynamicAttributesByCategoryIdQueryHandler));
+
         return services;
     }
 }

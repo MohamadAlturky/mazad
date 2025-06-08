@@ -2,6 +2,8 @@ using Mazad.Core.Domain.Categories;
 using Mazad.Core.Shared.Contexts;
 using Mazad.Core.Shared.CQRS;
 using Mazad.Core.Shared.Results;
+using Mazad.UseCases.CategoryDomain.CategoryAttributes.Read;
+using Mazad.UseCases.CategoryDomain.DynamicAttributes.Read;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mazad.UseCases.Categories.Read;
@@ -27,7 +29,9 @@ public class GetAllCategoriesQueryHandler : BaseQueryHandler<GetAllCategoriesQue
         // For a more efficient approach, especially with many categories, it's better to fetch
         // all categories and then build the hierarchy in memory.
         var allCategories = await _context.Categories
-                                        .AsNoTracking() // Use AsNoTracking for read-only operations for performance
+                                        .AsNoTracking()
+                                        .Include(c => c.CategoryAttributes)
+                                        .ThenInclude(ca => ca.DynamicAttribute)
                                         .ToListAsync();
 
         // 2. Store them in a dictionary for efficient lookup by Id
@@ -66,7 +70,15 @@ public class GetAllCategoriesQueryHandler : BaseQueryHandler<GetAllCategoriesQue
             Id = category.Id,
             Name = language == "ar" ? category.NameArabic : category.NameEnglish,
             IsActive = category.IsActive,
-            Children = new List<CategoryDto>()
+            Children = new List<CategoryDto>(),
+            DynamicAttributes = category.CategoryAttributes.Select(ca => new CategoryDynamicAttributeDto
+            {
+                Id = ca.DynamicAttributeId,
+                Name = language == "ar" ? ca.DynamicAttribute.NameArabic : ca.DynamicAttribute.NameEnglish,
+                IsActive = ca.DynamicAttribute.IsActive,
+                AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(ca.DynamicAttribute.AttributeValueType, language),
+                IsSelected = true
+            }).ToList()
         };
 
         // Find children of the current category from the dictionary
@@ -88,4 +100,5 @@ public class CategoryDto
     public required string Name { get; set; } = string.Empty;
     public required List<CategoryDto> Children { get; set; } = [];
     public required bool IsActive { get; set; }
+    public required List<CategoryDynamicAttributeDto> DynamicAttributes { get; set; } = [];
 }

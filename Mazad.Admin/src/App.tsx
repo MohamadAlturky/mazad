@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import Subcategories from "./components/Subcategories";
 import CategoriesTree from "./components/CategoriesTree";
 import DynamicAttributes from "./pages/DynamicAttributes";
+import CategoryAttributes from "./components/CategoryAttributes";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/subcategories/:id" element={<Subcategories/>} />
             <Route path="/categories-tree" element={<CategoriesTree />} />
             <Route path="/dynamic-attributes" element={<DynamicAttributes />} />
+            <Route path="/attributes/:categoryId" element={<CategoryAttributes />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

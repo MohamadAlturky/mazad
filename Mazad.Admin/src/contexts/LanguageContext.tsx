@@ -31,6 +31,7 @@ const translations = {
     save: 'حفظ',
     cancel: 'إلغاء',
     search: 'بحث',
+    openAll: 'فتح الكل',
     
     // Table Headers
     name: 'الاسم',
@@ -101,6 +102,20 @@ const translations = {
     errorDeletingAttribute: 'حدث خطأ أثناء حذف السمة',
     attributeDeletedSuccessfully: 'تم حذف السمة بنجاح',
     attributeValueType: 'النوع',
+    categoryAttributes: 'سمات الفئة',
+
+    // Tooltips
+    addNew: 'إضافة جديد',
+    viewCategoriesTree: 'عرض شجرة الفئات',
+    viewSubcategories: 'عرض الفئات الفرعية',
+    viewAttributes: 'عرض السمات',
+    deactivateItem: 'إلغاء تفعيل العنصر',
+    activateItem: 'تفعيل العنصر',
+
+    // Search
+    searchAttributes: 'ابحث عن السمات...',
+    noMatchingAttributes: 'لا توجد سمات مطابقة للبحث',
+    resultsFound: 'نتيجة',
   },
   en: {
     // App Name
@@ -123,6 +138,7 @@ const translations = {
     save: 'Save',
     cancel: 'Cancel',
     search: 'Search',
+    openAll: 'Open All',
     
     // Table Headers
     name: 'Name',
@@ -189,6 +205,20 @@ const translations = {
     errorDeletingAttribute: 'Error deleting attribute',
     attributeDeletedSuccessfully: 'Attribute deleted successfully',
     attributeValueType: 'type',
+    categoryAttributes: 'Category Attributes',
+
+    // Tooltips
+    addNew: 'Add New',
+    viewCategoriesTree: 'View Categories Tree',
+    viewSubcategories: 'View Subcategories',
+    viewAttributes: 'View Attributes',
+    deactivateItem: 'Deactivate Item',
+    activateItem: 'Activate Item',
+
+    // Search
+    searchAttributes: 'Search attributes...',
+    noMatchingAttributes: 'No matching attributes found',
+    resultsFound: 'results found',
   }
 };
 

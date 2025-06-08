@@ -164,6 +164,10 @@ const Categories: React.FC = () => {
     setCurrentPage(newPage);
   };
 
+  const handleViewAttributes = (category: Category) => {
+    window.location.href = `/attributes/${category.id}`;
+  };
+
   // Add a link to navigate to the Subcategories page
   const renderCategoryLink = (category: Category) => (
     <Link to={`/subcategories/${category.id}`} className="text-blue-500 hover:underline">
@@ -185,9 +189,11 @@ const Categories: React.FC = () => {
           onViewSubcategories={(category) => {
             window.location.href = `/subcategories/${category.id}`;
           }}
+          onViewAttributes={handleViewAttributes}
           onToggleActivation={handleToggleActivation}
           addButtonText={t('addCategory')}
           showSubcategoriesAction={true}
+          showAttributesAction={true}
           currentPage={currentPage}
           pageSize={pageSize}
           totalCount={totalCount}

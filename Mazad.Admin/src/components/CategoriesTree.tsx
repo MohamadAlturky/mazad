@@ -12,6 +12,13 @@ interface CategoryItem {
     name: string;
     isActive: boolean;
     children?: CategoryItem[];
+    dynamicAttributes?: {
+        id: number;
+        name: string;
+        isActive: boolean;
+        attributeValueTypeString: string;
+        isSelected: boolean;
+    }[];
 }
 
 const CategoriesTree: React.FC = () => {
@@ -53,6 +60,21 @@ const CategoriesTree: React.FC = () => {
         setExpandedItems(newExpanded);
     };
 
+    const openAll = () => {
+        const getAllIds = (items: CategoryItem[]): number[] => {
+            return items.reduce((ids: number[], item) => {
+                return [
+                    ...ids,
+                    item.id,
+                    ...(item.children ? getAllIds(item.children) : [])
+                ];
+            }, []);
+        };
+
+        const allIds = getAllIds(categories);
+        setExpandedItems(new Set(allIds));
+    };
+
     const renderCategoryItem = (item: CategoryItem, level: number = 0) => {
         const hasChildren = item.children && item.children.length > 0;
         const isExpanded = expandedItems.has(item.id);
@@ -83,7 +105,21 @@ const CategoriesTree: React.FC = () => {
                         ) : (
                             <div className="w-4" />
                         )}
-                        <span className="font-medium text-purple-900">{item.name}</span>
+                        <div className="flex flex-col">
+                            <span className="font-medium text-purple-900">{item.name}</span>
+                            {item.dynamicAttributes && item.dynamicAttributes.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                    {item.dynamicAttributes.map((attr) => (
+                                        <div
+                                            key={attr.id}
+                                            className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-full text-xs text-purple-700"
+                                        >
+                                            <span>{attr.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <Badge
@@ -106,8 +142,16 @@ const CategoriesTree: React.FC = () => {
     return (
         <AdminLayout loading={isLoading}>
             <Card className="border-purple-200">
-                <CardHeader>
-                    <CardTitle className="text-purple-900"> {t('categories')} </CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-purple-900">{t('categories')}</CardTitle>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={openAll}
+                        className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                    >
+                        {t('openAll')}
+                    </Button>
                 </CardHeader>
 
                 <CardContent>

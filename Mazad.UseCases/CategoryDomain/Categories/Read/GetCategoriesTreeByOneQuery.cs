@@ -2,6 +2,8 @@ using Mazad.Core.Domain.Categories;
 using Mazad.Core.Shared.Contexts;
 using Mazad.Core.Shared.CQRS;
 using Mazad.Core.Shared.Results;
+using Mazad.UseCases.CategoryDomain.CategoryAttributes.Read;
+using Mazad.UseCases.CategoryDomain.DynamicAttributes.Read;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mazad.UseCases.Categories.Read;
@@ -24,6 +26,8 @@ public override async Task<Result<List<CategoryDto>>> Handle(GetCategoriesTreeBy
     // Step 1: Load all categories from DB in one query
     var allCategories = await _context.Categories
         .AsNoTracking()
+        .Include(c => c.CategoryAttributes)
+        .ThenInclude(ca => ca.DynamicAttribute)
         .ToListAsync();
 
     // Step 2: Build a dictionary for quick access
@@ -49,7 +53,15 @@ public override async Task<Result<List<CategoryDto>>> Handle(GetCategoriesTreeBy
             Id = category.Id,
             Name = query.Language == "ar" ? category.NameArabic : category.NameEnglish,
             IsActive = category.IsActive,
-            Children = []
+            Children = [],
+            DynamicAttributes = [.. category.CategoryAttributes.Select(ca => new CategoryDynamicAttributeDto
+            {
+                Id = ca.DynamicAttributeId,
+                Name = query.Language == "ar" ? ca.DynamicAttribute.NameArabic : ca.DynamicAttribute.NameEnglish,
+                IsActive = ca.DynamicAttribute.IsActive,
+                AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(ca.DynamicAttribute.AttributeValueType, query.Language),
+                IsSelected = true
+            }).ToList()]
         };
     }
 

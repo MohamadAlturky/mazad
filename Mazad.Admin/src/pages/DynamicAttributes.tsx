@@ -7,7 +7,7 @@ import AdminLayout from '@/components/AdminLayout';
 import axios from 'axios';
 import { DynamicAttribute } from '../types';
 import { toast } from 'sonner';
-import EditDynamicAttributeForm from '@/components/EditDynamicAttributeForm';
+import EditDynamicAttributeForm, { EditDynamicAttributeFormData } from '@/components/EditDynamicAttributeForm';
 
 const DynamicAttributes: React.FC = () => {
   const { t, language } = useLanguage();
@@ -68,7 +68,7 @@ const DynamicAttributes: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleEditSubmit = (data: { name: string; type: string; }) => {
+  const handleEditSubmit = (data: EditDynamicAttributeFormData) => {
     console.log('Updated attribute:', data);
     setIsRefetching(isRefetching => !isRefetching);
   };
