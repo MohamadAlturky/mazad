@@ -45,7 +45,11 @@ public class CategoryController : BaseController
     [HttpGet]
     public async Task<IActionResult> Get()
     {
-        var result = await _getAllCategoriesQueryHandler.Handle(new GetAllCategoriesQuery());
+        var result = await _getAllCategoriesQueryHandler.Handle(new GetAllCategoriesQuery()
+        {
+            Language = GetLanguage(),
+            UserId = GetUserId()
+        });
         return Represent(result);
     }
     [HttpPost]
@@ -75,7 +79,8 @@ public class CategoryController : BaseController
     {
         var result = await _getCategoriesDropdownQueryHandler.Handle(new GetCategoriesDropdownQuery()
         {
-            Language = GetLanguage()
+            Language = GetLanguage(),
+            UserId = GetUserId()
         });
         return Represent(result);
     }
@@ -92,7 +97,8 @@ public class CategoryController : BaseController
             FilterByIsActiveEquals = filterByIsActiveEquals,
             PageSize = pageSize,
             PageNumber = pageNumber,
-            Language = GetLanguage()
+            Language = GetLanguage(),
+            UserId = GetUserId()
 
         });
         return Represent(result);
@@ -117,7 +123,8 @@ public class CategoryController : BaseController
         var result = await _getCategoriesTreeByOneQueryHandler.Handle(new GetCategoriesTreeByOneQuery
         {
             CategoryId = id,
-            Language = GetLanguage()
+            Language = GetLanguage(),
+            UserId = GetUserId()
         });
         return Represent(result);
     }

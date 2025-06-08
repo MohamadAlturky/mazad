@@ -29,8 +29,10 @@ const Subcategories: React.FC = () => {
   const [subcategories, setSubcategories] = useState<SubcategoryItem[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedSubcategory, setSelectedSubcategory] = useState<SubcategoryItem | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     const fetchSubcategories = async () => {
       try {
         const response = await fetch(`http://localhost:5032/api/categories/tree/${id}`, {
@@ -44,6 +46,8 @@ const Subcategories: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching subcategories:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -123,7 +127,7 @@ const Subcategories: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout loading={isLoading}>
 
     <Card className="border-purple-200">
       <CardHeader>

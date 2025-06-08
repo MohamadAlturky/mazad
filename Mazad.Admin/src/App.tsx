@@ -29,7 +29,6 @@ const App = () => (
             <Route path="/subcategories/:id" element={<Subcategories/>} />
             <Route path="/categories-tree" element={<CategoriesTree />} />
 
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

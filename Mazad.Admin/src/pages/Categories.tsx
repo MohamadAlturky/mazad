@@ -197,6 +197,7 @@ const Categories: React.FC = () => {
           open={isFormOpen}
           onOpenChange={setIsFormOpen}
           onSubmit={handleFormSubmit}
+          categoriesList={categories}
         />
       </>
       {editMode && (
@@ -205,6 +206,8 @@ const Categories: React.FC = () => {
           onOpenChange={setEditMode}
           onSubmit={handleEditSubmit}
           id={selectedCategory?.id}
+          categoriesList={categories}
+
         />
       )}
     </AdminLayout>

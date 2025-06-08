@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Category } from '@/types';
 
 interface EditSubcategoryFormData {
   nameArabic: string;
@@ -18,9 +19,11 @@ interface EditSubcategoryFormProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EditSubcategoryFormData) => void;
   id: number;
+  categoriesList: Category[];
 }
 
-const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenChange, onSubmit, id }) => {
+const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenChange, onSubmit, id, categoriesList }) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { t, language } = useLanguage();
   const { register, handleSubmit, reset, formState: { errors } } = useForm<EditSubcategoryFormData>({
     defaultValues: {
@@ -36,6 +39,7 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
       nameEnglish: data.nameEnglish,
     };
 
+    setIsLoading(true);
     axios.put(`http://localhost:5032/api/categories`, requestData, {
       headers: {
         'Accept-Language': language,
@@ -54,6 +58,9 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
       })
       .catch(error => {
         console.error('Error updating subcategory:', error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
 
@@ -103,12 +110,24 @@ const EditSubcategoryForm: React.FC<EditSubcategoryFormProps> = ({ open, onOpenC
             >
               {t('cancel')}
             </Button>
-            <Button
-              type="submit"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
-            >
-              {t('save')}
-            </Button>
+            {isLoading ? <>
+              <Button
+                type="submit"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                {t('loading')} ...
+              </Button>
+            </> : <>
+              <Button
+                type="submit"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                {t('save')}
+              </Button>
+            </>}
+
+
+
           </DialogFooter>
         </form>
       </DialogContent>

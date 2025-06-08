@@ -103,7 +103,7 @@ app.Run();
 
 public class DelayMiddleware : IMiddleware
 {
-    private readonly int _delay = 2000;
+    private readonly int _delay = 500;
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {

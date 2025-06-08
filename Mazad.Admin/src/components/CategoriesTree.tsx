@@ -15,16 +15,18 @@ interface CategoryItem {
 }
 
 const CategoriesTree: React.FC = () => {
-    const { t, isRTL } = useLanguage();
+    const { t, isRTL, language } = useLanguage();
     const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
     const [categories, setCategories] = useState<CategoryItem[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
+        setIsLoading(true);
         const fetchCategories = async () => {
             try {
                 const response = await fetch('http://localhost:5032/api/categories', {
                     headers: {
-                        'Accept-Language': 'en',
+                        'Accept-Language': language,
                     },
                 });
                 const data = await response.json();
@@ -33,11 +35,13 @@ const CategoriesTree: React.FC = () => {
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
         fetchCategories();
-    }, []);
+    }, [language]);
 
     const toggleExpanded = (id: number) => {
         const newExpanded = new Set(expandedItems);
@@ -100,7 +104,7 @@ const CategoriesTree: React.FC = () => {
     };
 
     return (
-        <AdminLayout>
+        <AdminLayout loading={isLoading}>
             <Card className="border-purple-200">
                 <CardHeader>
                     <CardTitle className="text-purple-900"> {t('categories')} </CardTitle>

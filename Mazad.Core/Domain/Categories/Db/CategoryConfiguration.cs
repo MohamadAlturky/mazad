@@ -39,4 +39,3 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }
-

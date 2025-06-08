@@ -4,8 +4,8 @@ namespace Mazad.Core.Shared.CQRS;
 
 public abstract class BaseQuery<T>
 {
-    public string Language { get; set; } = "ar";
-    public int UserId { get; set; }
+    public required string Language { get; set; }
+    public required int UserId { get; set; }
 }
 
 public abstract class BaseQueryHandler<TBaseQuery, T> where TBaseQuery : BaseQuery<T>

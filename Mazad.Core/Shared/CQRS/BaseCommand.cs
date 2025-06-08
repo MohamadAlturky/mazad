@@ -4,8 +4,8 @@ namespace Mazad.Core.Shared.CQRS;
 
 public abstract class BaseCommand<T>
 {
-    public string Language { get; set; } = "ar";
-    public int UserId { get; set; }
+    public required string Language { get; set; }
+    public required int UserId { get; set; }
 }
 
 public abstract class BaseCommandValidator<TBaseCommand, T> where TBaseCommand : BaseCommand<T>
@@ -19,8 +19,8 @@ public abstract class BaseCommandHandler<TBaseCommand, T> where TBaseCommand : B
 
 public abstract class BaseCommand
 {
-    public string Language { get; set; } = "ar";
-    public int UserId { get; set; }
+    public required string Language { get; set; }
+    public required int UserId { get; set; }
 }
 
 public abstract class BaseCommandHandler<TBaseCommand> where TBaseCommand : BaseCommand

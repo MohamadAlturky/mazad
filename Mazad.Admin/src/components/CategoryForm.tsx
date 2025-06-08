@@ -22,6 +22,7 @@ interface CategoryFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CategoryFormData) => void;
+  categoriesList: Category[];
 }
 
 interface Category extends BaseTable {
@@ -29,7 +30,7 @@ interface Category extends BaseTable {
   name: string;
 }
 
-const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmit }) => {
+const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmit, categoriesList }) => {
   const { t, language } = useLanguage();
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CategoryFormData>();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -56,7 +57,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ open, onOpenChange, onSubmi
       .finally(() => {
         setIsLoading(false);
       });
-  }, [language, setIsLoading, t]);
+  }, [language, setIsLoading, t, categoriesList]);
 
   // useEffect(() => {
   //   setValue('parentCategory', selectedCategory ? selectedCategory.id : null);
