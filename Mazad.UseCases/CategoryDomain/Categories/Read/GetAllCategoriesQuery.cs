@@ -8,11 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Mazad.UseCases.Categories.Read;
 
-public class GetAllCategoriesQuery : BaseQuery<List<CategoryDto>>
-{
-}
+public class GetAllCategoriesQuery : BaseQuery<List<CategoryDto>> { }
 
-public class GetAllCategoriesQueryHandler : BaseQueryHandler<GetAllCategoriesQuery, List<CategoryDto>>
+public class GetAllCategoriesQueryHandler
+    : BaseQueryHandler<GetAllCategoriesQuery, List<CategoryDto>>
 {
     private readonly MazadDbContext _context;
 
@@ -28,11 +27,11 @@ public class GetAllCategoriesQueryHandler : BaseQueryHandler<GetAllCategoriesQue
         // However, the current model loads ParentCategory and Children for each category.
         // For a more efficient approach, especially with many categories, it's better to fetch
         // all categories and then build the hierarchy in memory.
-        var allCategories = await _context.Categories
-                                        .AsNoTracking()
-                                        .Include(c => c.CategoryAttributes)
-                                        .ThenInclude(ca => ca.DynamicAttribute)
-                                        .ToListAsync();
+        var allCategories = await _context
+            .Categories.AsNoTracking()
+            .Include(c => c.CategoryAttributes)
+            .ThenInclude(ca => ca.DynamicAttribute)
+            .ToListAsync();
 
         // 2. Store them in a dictionary for efficient lookup by Id
         var categoryDictionary = allCategories.ToDictionary(c => c.Id);
@@ -49,11 +48,14 @@ public class GetAllCategoriesQueryHandler : BaseQueryHandler<GetAllCategoriesQue
             }
         }
 
-        return Result<List<CategoryDto>>.Ok(categoryDtos, new LocalizedMessage
-        {
-            Arabic = "تم الحصول على جميع الفئات بنجاح",
-            English = "All categories retrieved successfully"
-        });
+        return Result<List<CategoryDto>>.Ok(
+            categoryDtos,
+            new LocalizedMessage
+            {
+                Arabic = "تم الحصول على جميع الفئات بنجاح",
+                English = "All categories retrieved successfully",
+            }
+        );
     }
 
     /// <summary>
@@ -63,7 +65,11 @@ public class GetAllCategoriesQueryHandler : BaseQueryHandler<GetAllCategoriesQue
     /// <param name="categoryDictionary">A dictionary of all categories for efficient lookup.</param>
     /// <param name="language">The desired language for category names.</param>
     /// <returns>A CategoryDto with its children populated.</returns>
-    private CategoryDto MapCategoryToDto(Category category, Dictionary<int, Category> categoryDictionary, string language)
+    private CategoryDto MapCategoryToDto(
+        Category category,
+        Dictionary<int, Category> categoryDictionary,
+        string language
+    )
     {
         var categoryDto = new CategoryDto
         {
@@ -71,14 +77,22 @@ public class GetAllCategoriesQueryHandler : BaseQueryHandler<GetAllCategoriesQue
             Name = language == "ar" ? category.NameArabic : category.NameEnglish,
             IsActive = category.IsActive,
             Children = new List<CategoryDto>(),
-            DynamicAttributes = category.CategoryAttributes.Select(ca => new CategoryDynamicAttributeDto
-            {
-                Id = ca.DynamicAttributeId,
-                Name = language == "ar" ? ca.DynamicAttribute.NameArabic : ca.DynamicAttribute.NameEnglish,
-                IsActive = ca.DynamicAttribute.IsActive,
-                AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(ca.DynamicAttribute.AttributeValueType, language),
-                IsSelected = true
-            }).ToList()
+            DynamicAttributes = category
+                .CategoryAttributes.Select(ca => new CategoryDynamicAttributeDto
+                {
+                    Id = ca.DynamicAttributeId,
+                    Name =
+                        language == "ar"
+                            ? ca.DynamicAttribute.NameArabic
+                            : ca.DynamicAttribute.NameEnglish,
+                    IsActive = ca.DynamicAttribute.IsActive,
+                    AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(
+                        ca.DynamicAttribute.AttributeValueType,
+                        language
+                    ),
+                    IsSelected = true,
+                })
+                .ToList(),
         };
 
         // Find children of the current category from the dictionary

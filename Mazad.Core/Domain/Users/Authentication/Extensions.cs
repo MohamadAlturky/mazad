@@ -4,11 +4,11 @@ namespace Mazad.Core.Domain.Users.Authentication;
 
 public static class ClaimsPrincipalExtensions
 {
-    public static int? GetUserId(this ClaimsPrincipal principal)
+    public static int GetUserId(this ClaimsPrincipal principal)
     {
         if (principal == null)
         {
-            return null;
+            return 0;
         }
 
         var idClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
@@ -17,6 +17,6 @@ public static class ClaimsPrincipalExtensions
             return userId;
         }
 
-        return null;
+        return 0;
     }
 }

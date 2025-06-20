@@ -6,10 +6,7 @@ namespace Mazad.Api.Controllers;
 
 public class BaseController : ControllerBase
 {
-
-    public BaseController()
-    {
-    }
+    public BaseController() { }
 
     protected string GetLanguage()
     {
@@ -25,41 +22,51 @@ public class BaseController : ControllerBase
     {
         if (result.Success)
         {
-            return Ok(new ApiResponse
+            return Ok(
+                new ApiResponse
+                {
+                    Success = result.Success,
+                    Message =
+                        GetLanguage() == "ar" ? result.Message.Arabic : result.Message.English,
+                }
+            );
+        }
+
+        return Ok(
+            new ApiResponse
             {
                 Success = result.Success,
                 Message = GetLanguage() == "ar" ? result.Message.Arabic : result.Message.English,
-            });
-        }
-
-        return Ok(new ApiResponse
-        {
-            Success = result.Success,
-            Message = GetLanguage() == "ar" ? result.Message.Arabic : result.Message.English,
-            Exception = result.Exception?.Message ?? string.Empty,
-            StackTrace = result.Exception?.StackTrace ?? string.Empty,
-        });
+                Exception = result.Exception?.Message ?? string.Empty,
+                StackTrace = result.Exception?.StackTrace ?? string.Empty,
+            }
+        );
     }
 
     protected IActionResult Represent<T>(Result<T> result)
     {
         if (result.Success)
         {
-            return Ok(new ApiResponse<T>
+            return Ok(
+                new ApiResponse<T>
+                {
+                    Success = result.Success,
+                    Message =
+                        GetLanguage() == "ar" ? result.Message.Arabic : result.Message.English,
+                    Data = result.Data,
+                }
+            );
+        }
+
+        return Ok(
+            new ApiResponse
             {
                 Success = result.Success,
                 Message = GetLanguage() == "ar" ? result.Message.Arabic : result.Message.English,
-                Data = result.Data,
-            });
-        }
-
-        return Ok(new ApiResponse
-        {
-            Success = result.Success,
-            Message = GetLanguage() == "ar" ? result.Message.Arabic : result.Message.English,
-            Exception = result.Exception?.Message ?? string.Empty,
-            StackTrace = result.Exception?.StackTrace ?? string.Empty,
-        });
+                Exception = result.Exception?.Message ?? string.Empty,
+                StackTrace = result.Exception?.StackTrace ?? string.Empty,
+            }
+        );
     }
 }
 
@@ -67,6 +74,7 @@ public class ApiResponse<T> : ApiResponse
 {
     public T Data { get; set; }
 }
+
 public class ApiResponse
 {
     public bool Success { get; set; }
