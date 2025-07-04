@@ -21,23 +21,27 @@ public class GetDynamicAttributesByCategoryIdQueryHandler
         _context = context;
     }
 
-    public override async Task<Result<List<CategoryDynamicAttributeDto>>> Handle(GetDynamicAttributesByCategoryIdQuery query)
+    public override async Task<Result<List<CategoryDynamicAttributeDto>>> Handle(
+        GetDynamicAttributesByCategoryIdQuery query
+    )
     {
-
-        var categoryAttributes = await _context.CategoryAttributes
-            .AsNoTracking()
+        var categoryAttributes = await _context
+            .CategoryAttributes.AsNoTracking()
             .Where(ca => ca.CategoryId == query.CategoryId)
             .Select(ca => new DynamicAttributeDbDto
             {
                 Id = ca.DynamicAttributeId,
-                Name = query.Language == "ar" ? ca.DynamicAttribute.NameArabic : ca.DynamicAttribute.NameEnglish,
+                Name =
+                    query.Language == "ar"
+                        ? ca.DynamicAttribute.NameArabic
+                        : ca.DynamicAttribute.NameEnglish,
                 IsActive = ca.DynamicAttribute.IsActive,
                 AttributeValueType = ca.DynamicAttribute.AttributeValueType,
             })
             .ToListAsync();
 
-        var allAttributes = await _context.DynamicAttributes
-            .AsNoTracking()
+        var allAttributes = await _context
+            .DynamicAttributes.AsNoTracking()
             .Select(a => new DynamicAttributeDbDto
             {
                 Id = a.Id,
@@ -46,26 +50,57 @@ public class GetDynamicAttributesByCategoryIdQueryHandler
                 AttributeValueType = a.AttributeValueType,
             })
             .ToListAsync();
-        var unSelectedAttributes = allAttributes.Where(a => categoryAttributes.Any(ca => ca.Id == a.Id)).ToList();
-        var selectedAttributes = allAttributes.Where(a => !categoryAttributes.Any(ca => ca.Id == a.Id)).ToList();
+        var unSelectedAttributes = allAttributes
+            .Where(a => categoryAttributes.Any(ca => ca.Id == a.Id))
+            .ToList();
+        var selectedAttributes = allAttributes
+            .Where(a => !categoryAttributes.Any(ca => ca.Id == a.Id))
+            .ToList();
 
         List<CategoryDynamicAttributeDto> reponse = new List<CategoryDynamicAttributeDto>();
 
         foreach (var attribute in unSelectedAttributes)
         {
-            reponse.Add(new CategoryDynamicAttributeDto { Id = attribute.Id, Name = attribute.Name, IsActive = attribute.IsActive, AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(attribute.AttributeValueType, query.Language), IsSelected = true });
+            reponse.Add(
+                new CategoryDynamicAttributeDto
+                {
+                    Id = attribute.Id,
+                    Name = attribute.Name,
+                    IsActive = attribute.IsActive,
+                    AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(
+                        attribute.AttributeValueType,
+                        query.Language
+                    ),
+                    IsSelected = true,
+                }
+            );
         }
 
         foreach (var attribute in selectedAttributes)
         {
-            reponse.Add(new CategoryDynamicAttributeDto { Id = attribute.Id, Name = attribute.Name, IsActive = attribute.IsActive, AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(attribute.AttributeValueType, query.Language), IsSelected = false });
+            reponse.Add(
+                new CategoryDynamicAttributeDto
+                {
+                    Id = attribute.Id,
+                    Name = attribute.Name,
+                    IsActive = attribute.IsActive,
+                    AttributeValueTypeString = DynamicAttributeHelper.RepresentAttributeValueType(
+                        attribute.AttributeValueType,
+                        query.Language
+                    ),
+                    IsSelected = false,
+                }
+            );
         }
 
-        return Result<List<CategoryDynamicAttributeDto>>.Ok(reponse, new LocalizedMessage
+        return Result<List<CategoryDynamicAttributeDto>>.Ok(
+            reponse,
+            new LocalizedMessage
             {
                 Arabic = "تم الحصول على جميع السمات بنجاح",
-                English = "All attributes retrieved successfully"
-            });
+                English = "All attributes retrieved successfully",
+            }
+        );
     }
 }
 

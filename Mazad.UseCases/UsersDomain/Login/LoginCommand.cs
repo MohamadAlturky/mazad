@@ -13,4 +13,3 @@ public class LoginResponse
     public required string Phone { get; set; }
     public required int UserId { get; set; }
 }
-

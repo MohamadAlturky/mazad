@@ -13,7 +13,8 @@ public class GetCategoriesListQuery : BaseQuery<GetCategoriesListQueryResponse>
     public int PageNumber { get; set; } = 1;
 }
 
-public class GetCategoriesListQueryHandler : BaseQueryHandler<GetCategoriesListQuery, GetCategoriesListQueryResponse>
+public class GetCategoriesListQueryHandler
+    : BaseQueryHandler<GetCategoriesListQuery, GetCategoriesListQueryResponse>
 {
     private readonly MazadDbContext _context;
 
@@ -22,7 +23,9 @@ public class GetCategoriesListQueryHandler : BaseQueryHandler<GetCategoriesListQ
         _context = context;
     }
 
-    public override async Task<Result<GetCategoriesListQueryResponse>> Handle(GetCategoriesListQuery query)
+    public override async Task<Result<GetCategoriesListQueryResponse>> Handle(
+        GetCategoriesListQuery query
+    )
     {
         var queryable = _context.Categories.Include(c => c.ParentCategory).AsNoTracking();
         if (query.FilterByIsActiveEquals.HasValue)
@@ -30,10 +33,10 @@ public class GetCategoriesListQueryHandler : BaseQueryHandler<GetCategoriesListQ
             queryable = queryable.Where(c => c.IsActive == query.FilterByIsActiveEquals.Value);
         }
         var allCategories = await queryable
-        .OrderByDescending(c => c.Id)
-        .Skip((query.PageNumber - 1) * query.PageSize)
-        .Take(query.PageSize)
-        .ToListAsync();
+            .OrderByDescending(c => c.Id)
+            .Skip((query.PageNumber - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
 
         var totalCount = await queryable.CountAsync();
 
@@ -43,15 +46,18 @@ public class GetCategoriesListQueryHandler : BaseQueryHandler<GetCategoriesListQ
             categoryDtos.Add(MapCategoryToDto(category, query.Language));
         }
 
-        return Result<GetCategoriesListQueryResponse>.Ok(new GetCategoriesListQueryResponse
-        {
-            Categories = categoryDtos,
-            TotalCount = totalCount
-        }, new LocalizedMessage
-        {
-            Arabic = "تم الحصول على جميع الفئات بنجاح",
-            English = "All categories retrieved successfully"
-        });
+        return Result<GetCategoriesListQueryResponse>.Ok(
+            new GetCategoriesListQueryResponse
+            {
+                Categories = categoryDtos,
+                TotalCount = totalCount,
+            },
+            new LocalizedMessage
+            {
+                Arabic = "تم الحصول على جميع الفئات بنجاح",
+                English = "All categories retrieved successfully",
+            }
+        );
     }
 
     private CategoryListDto MapCategoryToDto(Category category, string language)
@@ -60,8 +66,11 @@ public class GetCategoriesListQueryHandler : BaseQueryHandler<GetCategoriesListQ
         {
             Id = category.Id,
             Name = language == "ar" ? category.NameArabic : category.NameEnglish,
-            ParentName = language == "ar" ? category.ParentCategory?.NameArabic ?? "لا يوجد" : category.ParentCategory?.NameEnglish ?? "No parent",
-            IsActive = category.IsActive
+            ParentName =
+                language == "ar"
+                    ? category.ParentCategory?.NameArabic ?? "لا يوجد"
+                    : category.ParentCategory?.NameEnglish ?? "No parent",
+            IsActive = category.IsActive,
         };
         return categoryDto;
     }
@@ -80,5 +89,3 @@ public class GetCategoriesListQueryResponse
     public required List<CategoryListDto> Categories { get; set; }
     public required int TotalCount { get; set; }
 }
-
-

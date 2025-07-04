@@ -14,6 +14,7 @@ using Mazad.UseCases.CategoryDomain.DynamicAttributes.Toggle;
 using Mazad.UseCases.CategoryDomain.DynamicAttributes.Update;
 using Mazad.UseCases.Users.Login;
 using Mazad.UseCases.Users.Profile;
+using Mazad.UseCases.Users.Read;
 using Mazad.UseCases.Users.Register;
 using Mazad.UseCases.Users.VerifyOtp;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,7 +65,7 @@ public static class Bootstrapper
         services.AddScoped(typeof(VerifyOtpCommandHandler));
         services.AddScoped(typeof(LoginCommandHandler));
         services.AddScoped(typeof(GetUserProfileQueryHandler));
-
+        services.AddScoped(typeof(GetUsersListQueryHandler));
         return services;
     }
 }
