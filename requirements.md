@@ -10,9 +10,9 @@ paginated list
 #get sub by category
 #get categories tree
 
-same for region
+#same for region
 
 get uses data table 
-paginated wit filter search by name and number (user not admins)
+#paginated wit filter search by name and number (user not admins)
 
 

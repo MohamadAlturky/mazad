@@ -241,6 +241,79 @@ public class UserController : BaseController
             );
         }
     }
+
+    [HttpGet("search")]
+    [Authorize(Policy = "Admin")]
+    public async Task<IActionResult> SearchUsers([FromQuery] SearchUsersDto request)
+    {
+        try
+        {
+            // Start with base query for users only (UserType = 2)
+            var query = _context.Users
+                .Where(u => u.UserType == UserType.User)
+                .AsQueryable();
+
+            // Apply search filter if provided
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                var searchTerm = request.SearchTerm.ToLower();
+                query = query.Where(u =>
+                    u.Name.ToLower().Contains(searchTerm) ||
+                    u.PhoneNumber.Contains(searchTerm)
+                );
+            }
+
+            // Get total count for pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination and get users
+            var users = await query
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(u => new UserListDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    PhoneNumber = u.PhoneNumber,
+                    UserType = u.UserType,
+                    ProfilePhotoUrl = u.ProfilePhotoUrl,
+                    CreatedAt = u.CreatedAt
+                })
+                .ToListAsync();
+
+            var result = new PaginatedResult<UserListDto>
+            {
+                Items = users,
+                TotalCount = totalCount,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            };
+
+            return Represent(
+                result,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم جلب المستخدمين بنجاح",
+                    English = "Users retrieved successfully"
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في جلب المستخدمين",
+                    English = "Failed to retrieve users"
+                },
+                ex
+            );
+        }
+    }
 }
 
 public class RegisterUserDto
@@ -259,4 +332,21 @@ public class VerifyOtpDto
 {
     public int UserId { get; set; }
     public string Otp { get; set; } = string.Empty;
+}
+
+public class SearchUsersDto
+{
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public string? SearchTerm { get; set; }
+}
+
+public class UserListDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public UserType UserType { get; set; }
+    public string? ProfilePhotoUrl { get; set; }
+    public DateTime CreatedAt { get; set; }
 }

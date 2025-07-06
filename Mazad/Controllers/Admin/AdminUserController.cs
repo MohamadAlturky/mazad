@@ -50,6 +50,7 @@ public class AdminUserController : BaseController
                 Name = request.Name,
                 Email = request.Email,
                 Password = hashedPassword,
+                UserType = UserType.Admin
             };
 
             // Add to database
@@ -62,6 +63,7 @@ public class AdminUserController : BaseController
                     adminUser.Id,
                     adminUser.Name,
                     adminUser.Email,
+                    adminUser.UserType
                 },
                 true,
                 new LocalizedMessage
@@ -203,6 +205,81 @@ public class AdminUserController : BaseController
         }
     }
 
+    [HttpGet("users")]
+    [Authorize(Policy = "Admin")]
+    public async Task<IActionResult> GetUsers([FromQuery] GetUsersDto request)
+    {
+        try
+        {
+            // Start with base query
+            var query = _context.Users.AsQueryable();
+
+            // Apply filters if provided
+            if (request.UserType.HasValue)
+            {
+                query = query.Where(u => u.UserType == request.UserType.Value);
+            }
+
+            // For debugging: Log the SQL query
+            var debugQuery = query.ToQueryString();
+            Console.WriteLine($"Debug SQL Query: {debugQuery}");
+
+            // Get total count for pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination and get users
+            var users = await query
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(u => new UserDetailsDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    UserType = u.UserType,
+                    ProfilePhotoUrl = u.ProfilePhotoUrl,
+                    CreatedAt = u.CreatedAt
+                })
+                .ToListAsync();
+
+            // For debugging: Log the results
+            Console.WriteLine($"Debug Results: Found {users.Count} users with UserType {request.UserType}");
+
+            var result = new PaginatedResult<UserDetailsDto>
+            {
+                Items = users,
+                TotalCount = totalCount,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            };
+
+            return Represent(
+                result,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم جلب المستخدمين بنجاح",
+                    English = "Users retrieved successfully"
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في جلب المستخدمين",
+                    English = "Failed to retrieve users"
+                },
+                ex
+            );
+        }
+    }
+
     private string HashPassword(string password)
     {
         using var sha256 = SHA256.Create();
@@ -230,5 +307,23 @@ public class AdminUser
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+public class GetUsersDto
+{
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public UserType? UserType { get; set; }
+}
+
+public class UserDetailsDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public UserType UserType { get; set; }
+    public string? ProfilePhotoUrl { get; set; }
     public DateTime CreatedAt { get; set; }
 }
