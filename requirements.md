@@ -1,14 +1,14 @@
 category
 
 
-category dropdown
-add new category
-update category
-toggle activation
-delete
+#category dropdown
+#add new category
+#update category
+#toggle activation
+#delete
 paginated list
-get sub by category
-get categories tree
+#get sub by category
+#get categories tree
 
 same for region
 

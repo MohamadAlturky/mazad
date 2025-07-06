@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Mazad.Migrations
 {
     /// <inheritdoc />
-    public partial class InitDb : Migration
+    public partial class initDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -84,6 +84,8 @@ namespace Mazad.Migrations
                     PhoneNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     ProfilePhotoUrl = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
                     UserType = table.Column<int>(type: "int", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),

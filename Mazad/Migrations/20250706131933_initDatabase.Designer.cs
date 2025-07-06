@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mazad.Migrations
 {
     [DbContext(typeof(MazadDbContext))]
-    [Migration("20250704212115_AddingPass")]
-    partial class AddingPass
+    [Migration("20250706131933_initDatabase")]
+    partial class initDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -309,6 +309,10 @@ namespace Mazad.Migrations
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
