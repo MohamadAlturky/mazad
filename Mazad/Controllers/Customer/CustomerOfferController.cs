@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mazad.Core.Domain.Regions;
+using Mazad.Controllers;
+using Mazad.Core.Shared.OfferDetails;
 
 namespace Mazad.Controllers;
 
@@ -21,74 +23,6 @@ public class CustomerOfferController : BaseController
     {
         _unitOfWork = unitOfWork;
         _fileStorageService = fileStorageService;
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetOfferById(int id)
-    {
-        try
-        {
-            var offer = await _unitOfWork.Context.Set<Offer>()
-                .Include(o => o.Category)
-                .Include(o => o.Region)
-                .Include(o => o.ImagesUrl.Where(i => !i.IsDeleted))
-                .Where(o => !o.IsDeleted && o.Id == id)
-                .Select(o => new OfferDetailsDto
-                {
-                    Id = o.Id,
-                    Name = o.Name,
-                    Description = o.Description,
-                    Price = o.Price,
-                    CategoryId = o.CategoryId,
-                    CategoryName = o.Category.NameAr,
-                    RegionId = o.RegionId,
-                    RegionName = o.Region.NameArabic,
-                    MainImageUrl = o.MainImageUrl,  // The FileStorageService already returns the correct relative path
-                    AdditionalImages = o.ImagesUrl
-                        .Select(i => i.ImageUrl)  // The FileStorageService already returns the correct relative path
-                        .ToList(),
-                    CreatedAt = o.CreatedAt,
-                    IsActive = o.IsActive
-                })
-                .FirstOrDefaultAsync();
-
-            if (offer == null)
-            {
-                return Represent(
-                    false,
-                    new LocalizedMessage
-                    {
-                        Arabic = "العرض غير موجود",
-                        English = "Offer not found"
-                    }
-                );
-            }
-
-            return Represent(
-                offer,
-                true,
-                new LocalizedMessage
-                {
-                    Arabic = "تم جلب العرض بنجاح",
-                    English = "Offer retrieved successfully"
-                }
-            );
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error retrieving offer: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-
-            return Represent(
-                false,
-                new LocalizedMessage
-                {
-                    Arabic = "فشل في جلب العرض",
-                    English = "Failed to retrieve offer"
-                },
-                ex
-            );
-        }
     }
 
     [HttpPost("create")]
@@ -340,20 +274,4 @@ public class CreateOfferDto
     public int CategoryId { get; set; }
     public int RegionId { get; set; }
     public List<IFormFile> Images { get; set; } = [];
-}
-
-public class OfferDetailsDto
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public double Price { get; set; }
-    public int CategoryId { get; set; }
-    public string CategoryName { get; set; } = string.Empty;
-    public int RegionId { get; set; }
-    public string RegionName { get; set; } = string.Empty;
-    public string MainImageUrl { get; set; } = string.Empty;
-    public List<string> AdditionalImages { get; set; } = [];
-    public DateTime CreatedAt { get; set; }
-    public bool IsActive { get; set; }
 }
