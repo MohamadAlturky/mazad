@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Mazad.Core.Shared.Entities;
+using Mazad.Core.Domain.Regions;
 
 namespace Mazad.Models;
 
@@ -21,6 +22,9 @@ public class Offer : BaseEntity<int>
     public double Price { get; set; }
 
     public Category Category { get; set; } = new();
+    
+    public int RegionId { get; set; }
+    public Region Region { get; set; } = new();
 }
 
 public class OfferImage : BaseEntity<int>

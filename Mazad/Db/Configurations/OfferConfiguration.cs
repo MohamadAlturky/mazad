@@ -1,6 +1,7 @@
 using Mazad.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Mazad.Core.Domain.Regions;
 
 namespace Mazad.Core.Domain.Users.Db;
 
@@ -19,6 +20,12 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
             .WithOne(o => o.Offer)
             .HasForeignKey(pi => pi.OfferId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .HasOne(o => o.Region)
+            .WithMany()
+            .HasForeignKey(o => o.RegionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

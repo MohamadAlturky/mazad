@@ -12,7 +12,22 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasKey(c => c.Id);
         builder.HasQueryFilter(c => !c.IsDeleted);
-        builder.HasIndex(e => e.PhoneNumber).HasDatabaseName("IX_Users_PhoneNumber").IsUnique();
-        builder.HasIndex(e => e.Name).HasDatabaseName("IX_Users_Name");
+        
+        // Make PhoneNumber unique only when it has a value
+        builder.HasIndex(e => e.PhoneNumber)
+            .HasDatabaseName("IX_Users_PhoneNumber")
+            .IsUnique()
+            .HasFilter("[PhoneNumber] IS NOT NULL");  // SQL Server specific - ignore nulls in unique index
+            
+        builder.HasIndex(e => e.Name)
+            .HasDatabaseName("IX_Users_Name");
+
+        // Make ProfilePhotoUrl optional
+        builder.Property(e => e.ProfilePhotoUrl)
+            .IsRequired(false);
+
+        // Make PhoneNumber optional
+        builder.Property(e => e.PhoneNumber)
+            .IsRequired(false);
     }
 }

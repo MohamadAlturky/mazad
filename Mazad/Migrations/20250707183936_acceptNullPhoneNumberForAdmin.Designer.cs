@@ -4,6 +4,7 @@ using Mazad.Core.Shared.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mazad.Migrations
 {
     [DbContext(typeof(MazadDbContext))]
-    partial class MazadDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250707183936_acceptNullPhoneNumberForAdmin")]
+    partial class acceptNullPhoneNumberForAdmin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -245,17 +248,12 @@ namespace Mazad.Migrations
                     b.Property<int>("ProviderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("RegionId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
-
-                    b.HasIndex("RegionId");
 
                     b.ToTable("Offers", "dbo");
                 });
@@ -424,15 +422,7 @@ namespace Mazad.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Mazad.Core.Domain.Regions.Region", "Region")
-                        .WithMany()
-                        .HasForeignKey("RegionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Category");
-
-                    b.Navigation("Region");
                 });
 
             modelBuilder.Entity("Mazad.Models.OfferImage", b =>

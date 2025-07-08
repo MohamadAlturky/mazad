@@ -3,12 +3,15 @@ using System.Text;
 using Mazad.Api.Infrastrcture;
 using Mazad.Core.Domain.Users.Authentication;
 using Mazad.Core.Shared.Contexts;
+using Mazad.Services;
 using Mazad.UseCases.UsersDomain.Otp;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Mazad.Core.Shared;
+using Mazad.Core.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -20,14 +23,25 @@ builder.Services.Configure<OtpServiceSettings>(
 
 builder.Services.AddSingleton<IOtpService, OtpService>();
 
-builder.Services.AddScoped<ISaveChangesInterceptor, BaseEntityInterceptor>();
+// Register TimeProvider
+builder.Services.AddSingleton(TimeProvider.System);
 
-builder.Services.AddDbContext<MazadDbContext>(
-    (serviceProvider, options) =>
-        options
-            .UseSqlServer(connectionString)
-            .AddInterceptors(serviceProvider.GetServices<ISaveChangesInterceptor>())
-);
+// Create singleton interceptor instance
+var timeProvider = TimeProvider.System;
+var interceptor = new BaseEntityInterceptor(timeProvider);
+
+// Configure DbContext with singleton interceptor
+builder.Services.AddDbContextFactory<MazadDbContext>(options =>
+    options.UseSqlServer(connectionString)
+           .AddInterceptors(interceptor));
+
+// Register scoped DbContext
+builder.Services.AddScoped<MazadDbContext>(sp => 
+    sp.GetRequiredService<IDbContextFactory<MazadDbContext>>().CreateDbContext());
+
+// Register UnitOfWork
+builder.Services.AddScoped<IUnitOfWork>(provider => 
+    new UnitOfWork(provider.GetRequiredService<MazadDbContext>()));
 
 builder.Services.AddControllers();
 
@@ -108,16 +122,28 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"));
 });
 
+// Configure CORS with specific origins
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() 
+    ?? new[] { "http://localhost:3000", "https://localhost:3000" }; // Default if not configured
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
         "AllowAll",
         builder =>
         {
-            builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+            builder
+                .WithOrigins(allowedOrigins)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials()
+                .WithExposedHeaders("Content-Disposition"); // For file downloads
         }
     );
 });
+
+// Add FileStorageService
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
 var app = builder.Build();
 
@@ -126,13 +152,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Order is important for middleware
 app.UseMiddleware<DelayMiddleware>();
 app.UseHttpsRedirection();
 
+// Place CORS before routing and auth
+app.UseCors("AllowAll");
+
+// Configure static files to serve from wwwroot
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseCors("AllowAll");
 
 app.MapControllers();
 
