@@ -1,14 +1,11 @@
 ﻿using Mazad.Api.Controllers;
-using Mazad.Core.Shared.Contexts;
+using Mazad.Core.Domain.Regions;
 using Mazad.Core.Shared.Interfaces;
 using Mazad.Models;
 using Mazad.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Mazad.Core.Domain.Regions;
-using Mazad.Controllers;
-using Mazad.Core.Shared.OfferDetails;
 
 namespace Mazad.Controllers;
 
@@ -30,7 +27,7 @@ public class CustomerOfferController : BaseController
     public async Task<IActionResult> CreateOffer([FromForm] CreateOfferDto request)
     {
         await _unitOfWork.BeginTransactionAsync();
-        
+
         try
         {
             // Input validation
@@ -42,7 +39,7 @@ public class CustomerOfferController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "معرف الفئة غير صالح",
-                        English = "Invalid category ID"
+                        English = "Invalid category ID",
                     }
                 );
             }
@@ -55,21 +52,24 @@ public class CustomerOfferController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "معرف المنطقة غير صالح",
-                        English = "Invalid region ID"
+                        English = "Invalid region ID",
                     }
                 );
             }
 
             // Debug log
-            Console.WriteLine($"Received request with CategoryId: {request.CategoryId} and RegionId: {request.RegionId}");
+            Console.WriteLine(
+                $"Received request with CategoryId: {request.CategoryId} and RegionId: {request.RegionId}"
+            );
             Console.WriteLine($"Number of images: {request.Images?.Count ?? 0}");
 
             // Validate category exists - with explicit query logging
             var categoryId = request.CategoryId;
-            var category = await _unitOfWork.Context.Set<Category>()
+            var category = await _unitOfWork
+                .Context.Set<Category>()
                 .Where(c => !c.IsDeleted && c.Id == categoryId)
-                .FirstOrDefaultAsync();  // Get the full entity
-            
+                .FirstOrDefaultAsync(); // Get the full entity
+
             if (category == null)
             {
                 Console.WriteLine($"Category not found in database. Requested ID: {categoryId}");
@@ -78,14 +78,15 @@ public class CustomerOfferController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "الفئة غير موجودة",
-                        English = "Category not found"
+                        English = "Category not found",
                     }
                 );
             }
 
             // Validate region exists
             var regionId = request.RegionId;
-            var region = await _unitOfWork.Context.Set<Region>()
+            var region = await _unitOfWork
+                .Context.Set<Region>()
                 .Where(r => !r.IsDeleted && r.Id == regionId)
                 .FirstOrDefaultAsync();
 
@@ -97,14 +98,18 @@ public class CustomerOfferController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "المنطقة غير موجودة",
-                        English = "Region not found"
+                        English = "Region not found",
                     }
                 );
             }
 
             // Debug log
-            Console.WriteLine($"Found category - ID: {category.Id}, Name AR: {category.NameAr}, Name EN: {category.NameEn}");
-            Console.WriteLine($"Found region - ID: {region.Id}, Name AR: {region.NameArabic}, Name EN: {region.NameEnglish}");
+            Console.WriteLine(
+                $"Found category - ID: {category.Id}, Name AR: {category.NameAr}, Name EN: {category.NameEn}"
+            );
+            Console.WriteLine(
+                $"Found region - ID: {region.Id}, Name AR: {region.NameArabic}, Name EN: {region.NameEnglish}"
+            );
 
             // Validate at least one image is provided
             if (request.Images == null || !request.Images.Any())
@@ -114,7 +119,7 @@ public class CustomerOfferController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "يجب تقديم صورة واحدة على الأقل",
-                        English = "At least one image must be provided"
+                        English = "At least one image must be provided",
                     }
                 );
             }
@@ -135,20 +140,22 @@ public class CustomerOfferController : BaseController
                 CreatedAt = now,
                 UpdatedAt = now,
                 IsActive = true,
-                IsDeleted = false
+                IsDeleted = false,
             };
 
             // Save offer to get its ID
             await _unitOfWork.Context.Set<Offer>().AddAsync(offer);
             await _unitOfWork.SaveChangesAsync();
-            
-            Console.WriteLine($"Created offer - ID: {offer.Id}, CategoryId: {category.Id}, RegionId: {region.Id}");
+
+            Console.WriteLine(
+                $"Created offer - ID: {offer.Id}, CategoryId: {category.Id}, RegionId: {region.Id}"
+            );
 
             // Now save the main image with the offer ID
             try
             {
                 var mainImageUrl = await _fileStorageService.SaveFileAsync(
-                    request.Images[0], 
+                    request.Images[0],
                     $"offers/{offer.Id}/main"
                 );
                 // Store the relative path for database
@@ -189,7 +196,7 @@ public class CustomerOfferController : BaseController
                         CreatedAt = now,
                         UpdatedAt = now,
                         IsActive = true,
-                        IsDeleted = false
+                        IsDeleted = false,
                     };
                     offerImages.Add(offerImage);
                 }
@@ -205,7 +212,8 @@ public class CustomerOfferController : BaseController
             await _unitOfWork.CommitAsync();
 
             // Get the complete offer with images - using tracked category and region
-            var createdOffer = await _unitOfWork.Context.Set<Offer>()
+            var createdOffer = await _unitOfWork
+                .Context.Set<Offer>()
                 .Include(o => o.Category)
                 .Include(o => o.Region)
                 .Include(o => o.ImagesUrl.Where(i => !i.IsDeleted))
@@ -221,11 +229,9 @@ public class CustomerOfferController : BaseController
                     RegionId = o.RegionId,
                     RegionName = o.Region.NameArabic,
                     MainImageUrl = o.MainImageUrl,
-                    AdditionalImages = o.ImagesUrl
-                        .Select(i => i.ImageUrl)
-                        .ToList(),
+                    AdditionalImages = o.ImagesUrl.Select(i => i.ImageUrl).ToList(),
                     CreatedAt = o.CreatedAt,
-                    IsActive = o.IsActive
+                    IsActive = o.IsActive,
                 })
                 .FirstOrDefaultAsync();
 
@@ -234,7 +240,9 @@ public class CustomerOfferController : BaseController
                 throw new Exception($"Failed to retrieve created offer with ID {offer.Id}");
             }
 
-            Console.WriteLine($"Final offer - ID: {createdOffer.Id}, CategoryId: {createdOffer.CategoryId}, CategoryName: {createdOffer.CategoryName}, RegionId: {createdOffer.RegionId}, RegionName: {createdOffer.RegionName}, Images: {1 + createdOffer.AdditionalImages.Count}");
+            Console.WriteLine(
+                $"Final offer - ID: {createdOffer.Id}, CategoryId: {createdOffer.CategoryId}, CategoryName: {createdOffer.CategoryName}, RegionId: {createdOffer.RegionId}, RegionName: {createdOffer.RegionName}, Images: {1 + createdOffer.AdditionalImages.Count}"
+            );
 
             return Represent(
                 createdOffer,
@@ -242,14 +250,14 @@ public class CustomerOfferController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم إنشاء العرض بنجاح",
-                    English = "Offer created successfully"
+                    English = "Offer created successfully",
                 }
             );
         }
         catch (Exception ex)
         {
             await _unitOfWork.RollbackAsync();
-            
+
             Console.WriteLine($"Error creating offer: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
 
@@ -258,7 +266,7 @@ public class CustomerOfferController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في إنشاء العرض",
-                    English = "Failed to create offer"
+                    English = "Failed to create offer",
                 },
                 ex
             );

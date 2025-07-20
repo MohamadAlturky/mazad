@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Mazad.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/shared/categories")]
 public class SharedCategoyController : BaseController
 {
     private readonly MazadDbContext _context;
@@ -32,29 +32,40 @@ public class SharedCategoyController : BaseController
             var isArabic = currentLanguage == "ar";
 
             // Build base query for categories
-            var query = _context.Categories
-                .Include(c => c.SubCategories.Where(sc => !sc.IsDeleted && sc.IsActive))
-                    .ThenInclude(sc => sc.SubCategories.Where(ssc => !ssc.IsDeleted && ssc.IsActive))
+            var query = _context
+                .Categories.Include(c => c.SubCategories.Where(sc => !sc.IsDeleted && sc.IsActive))
+                .ThenInclude(sc => sc.SubCategories.Where(ssc => !ssc.IsDeleted && ssc.IsActive))
                 .Where(c => !c.IsDeleted && c.IsActive);
 
             // Apply search filter if provided
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var searchTerm = request.SearchTerm.ToLower();
-                
+
                 // Get IDs of all categories (including subcategories) that match the search term
-                var matchingCategoryIds = await _context.Categories
-                    .Where(c => !c.IsDeleted && c.IsActive &&
-                        ((isArabic ? c.NameAr : c.NameEn).ToLower().Contains(searchTerm) ||
-                        (isArabic ? c.DescriptionAr : c.DescriptionEn).ToLower().Contains(searchTerm)))
+                var matchingCategoryIds = await _context
+                    .Categories.Where(c =>
+                        !c.IsDeleted
+                        && c.IsActive
+                        && (
+                            (isArabic ? c.NameAr : c.NameEn).ToLower().Contains(searchTerm)
+                        // || (isArabic ? c.DescriptionAr : c.DescriptionEn)
+                        //     .ToLower()
+                        //     .Contains(searchTerm)
+                        )
+                    )
                     .Select(c => c.Id)
                     .ToListAsync();
 
                 // Get IDs of parent categories that have matching subcategories
-                var parentCategoryIds = await _context.Categories
-                    .Where(c => !c.IsDeleted && c.IsActive && 
-                        c.SubCategories.Any(sc => 
-                            !sc.IsDeleted && sc.IsActive && matchingCategoryIds.Contains(sc.Id)))
+                var parentCategoryIds = await _context
+                    .Categories.Where(c =>
+                        !c.IsDeleted
+                        && c.IsActive
+                        && c.SubCategories.Any(sc =>
+                            !sc.IsDeleted && sc.IsActive && matchingCategoryIds.Contains(sc.Id)
+                        )
+                    )
                     .Select(c => c.Id)
                     .ToListAsync();
 
@@ -81,7 +92,9 @@ public class SharedCategoyController : BaseController
                 .ToListAsync();
 
             // Map categories to tree structure
-            var categoryTree = rootCategories.Select(c => MapToCategoryTreeDto(c, isArabic)).ToList();
+            var categoryTree = rootCategories
+                .Select(c => MapToCategoryTreeDto(c, isArabic))
+                .ToList();
 
             var result = new PaginatedResult<CategoryTreeDto>
             {
@@ -89,7 +102,7 @@ public class SharedCategoyController : BaseController
                 TotalCount = totalCount,
                 Page = request.Page,
                 PageSize = request.PageSize,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize),
             };
 
             return Represent(
@@ -98,7 +111,7 @@ public class SharedCategoyController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم جلب شجرة الفئات بنجاح",
-                    English = "Category tree retrieved successfully"
+                    English = "Category tree retrieved successfully",
                 }
             );
         }
@@ -109,7 +122,7 @@ public class SharedCategoyController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في جلب شجرة الفئات",
-                    English = "Failed to retrieve category tree"
+                    English = "Failed to retrieve category tree",
                 },
                 ex
             );
@@ -117,7 +130,10 @@ public class SharedCategoyController : BaseController
     }
 
     [HttpGet("{categoryId}/subcategories")]
-    public async Task<IActionResult> GetSubCategories(int categoryId, [FromQuery] GetSubCategoriesDto request)
+    public async Task<IActionResult> GetSubCategories(
+        int categoryId,
+        [FromQuery] GetSubCategoriesDto request
+    )
     {
         try
         {
@@ -125,8 +141,9 @@ public class SharedCategoyController : BaseController
             var isArabic = currentLanguage == "ar";
 
             // Check if the parent category exists and is active
-            var parentCategory = await _context.Categories
-                .FirstOrDefaultAsync(c => c.Id == categoryId && !c.IsDeleted && c.IsActive);
+            var parentCategory = await _context.Categories.FirstOrDefaultAsync(c =>
+                c.Id == categoryId && !c.IsDeleted && c.IsActive
+            );
 
             if (parentCategory == null)
             {
@@ -135,14 +152,14 @@ public class SharedCategoyController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "الفئة غير موجودة أو غير نشطة",
-                        English = "Category not found or inactive"
+                        English = "Category not found or inactive",
                     }
                 );
             }
 
             // Build query for subcategories with their child count
-            var query = _context.Categories
-                .Include(c => c.SubCategories.Where(sc => !sc.IsDeleted && sc.IsActive))
+            var query = _context
+                .Categories.Include(c => c.SubCategories.Where(sc => !sc.IsDeleted && sc.IsActive))
                 .Where(c => c.ParentId == categoryId && !c.IsDeleted && c.IsActive);
 
             // Apply search filter if provided
@@ -150,8 +167,9 @@ public class SharedCategoyController : BaseController
             {
                 var searchTerm = request.SearchTerm.ToLower();
                 query = query.Where(c =>
-                    (isArabic ? c.NameAr : c.NameEn).ToLower().Contains(searchTerm) ||
-                    (isArabic ? c.DescriptionAr : c.DescriptionEn).ToLower().Contains(searchTerm)
+                    (isArabic ? c.NameAr : c.NameEn).ToLower().Contains(searchTerm)
+                // ||
+                // (isArabic ? c.DescriptionAr : c.DescriptionEn).ToLower().Contains(searchTerm)
                 );
             }
 
@@ -167,9 +185,9 @@ public class SharedCategoyController : BaseController
                 {
                     Id = c.Id,
                     Name = isArabic ? c.NameAr : c.NameEn,
-                    Description = isArabic ? c.DescriptionAr : c.DescriptionEn,
+                    // Description = isArabic ? c.DescriptionAr : c.DescriptionEn,
                     ImageUrl = c.ImageUrl,
-                    HasSubCategories = c.SubCategories.Any()
+                    HasSubCategories = c.SubCategories.Any(),
                 })
                 .ToListAsync();
 
@@ -178,7 +196,7 @@ public class SharedCategoyController : BaseController
                 ParentCategory = new
                 {
                     parentCategory.Id,
-                    Name = isArabic ? parentCategory.NameAr : parentCategory.NameEn
+                    Name = isArabic ? parentCategory.NameAr : parentCategory.NameEn,
                 },
                 SubCategories = new PaginatedResult<CategoryListItemDto>
                 {
@@ -186,8 +204,8 @@ public class SharedCategoyController : BaseController
                     TotalCount = totalCount,
                     Page = request.Page,
                     PageSize = request.PageSize,
-                    TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
-                }
+                    TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize),
+                },
             };
 
             return Represent(
@@ -196,7 +214,7 @@ public class SharedCategoyController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم جلب الفئات الفرعية بنجاح",
-                    English = "Subcategories retrieved successfully"
+                    English = "Subcategories retrieved successfully",
                 }
             );
         }
@@ -207,7 +225,7 @@ public class SharedCategoyController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في جلب الفئات الفرعية",
-                    English = "Failed to retrieve subcategories"
+                    English = "Failed to retrieve subcategories",
                 },
                 ex
             );
@@ -220,37 +238,46 @@ public class SharedCategoyController : BaseController
         {
             Id = category.Id,
             Name = isArabic ? category.NameAr : category.NameEn,
-            Description = isArabic ? category.DescriptionAr : category.DescriptionEn,
+            // Description = isArabic ? category.DescriptionAr : category.DescriptionEn,
             ImageUrl = category.ImageUrl,
-            SubCategories = category.SubCategories
-                .Select(sc => MapToCategoryTreeDto(sc, isArabic))
-                .ToList()
+            SubCategories = category
+                .SubCategories.Select(sc => MapToCategoryTreeDto(sc, isArabic))
+                .ToList(),
         };
     }
 
-    [HttpGet("AllCategories")]
+    [HttpGet("all-categories")]
+    [ProducesResponseType<List<CustomerCategoryDto>>(200)]
     public async Task<IActionResult> GetAllCategories()
     {
         try
         {
             var currentLanguage = GetLanguage();
             var isArabic = currentLanguage == "ar";
-
-            var categories = await _context.Categories
-                .Include(c => c.ParentCategory)
+            var categories = await _context
+                .Categories.Include(c => c.SubCategories)
                 .Where(c => !c.IsDeleted && c.IsActive)
+                .Where(c => c.ParentId == null)
                 .Select(c => new CustomerCategoryDto
                 {
                     Id = c.Id,
                     Name = isArabic ? c.NameAr : c.NameEn,
-                    Description = isArabic ? c.DescriptionAr : c.DescriptionEn,
+                    // Description = isArabic ? c.DescriptionAr : c.DescriptionEn,
                     ImageUrl = c.ImageUrl,
-                    ParentId = c.ParentId,
-                    ParentName = c.ParentCategory != null ? (isArabic ? c.ParentCategory.NameAr : c.ParentCategory.NameEn) : null,
-                    HasSubCategories = c.SubCategories.Any(sc => !sc.IsDeleted && sc.IsActive)
+                    NumberOfOffers = c.Offers.Count,
+                    SubCategories = c
+                        .SubCategories.Select(sc => new CustomerCategoryDto
+                        {
+                            Id = sc.Id,
+                            Name = isArabic ? sc.NameAr : sc.NameEn,
+                            // Description = isArabic ? sc.DescriptionAr : sc.DescriptionEn,
+                            ImageUrl = sc.ImageUrl,
+                            NumberOfOffers = sc.Offers.Count,
+                        })
+                        .ToList(),
                 })
-                .OrderBy(c => c.ParentId) // Root categories first, then grouped by parent
-                .ThenBy(c => c.Name)      // Alphabetically within each group
+                .OrderByDescending(c => c.NumberOfOffers)
+                .ThenBy(c => c.Id)
                 .ToListAsync();
 
             return Represent(
@@ -259,7 +286,7 @@ public class SharedCategoyController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم جلب الفئات بنجاح",
-                    English = "Categories retrieved successfully"
+                    English = "Categories retrieved successfully",
                 }
             );
         }
@@ -270,7 +297,7 @@ public class SharedCategoyController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في جلب الفئات",
-                    English = "Failed to retrieve categories"
+                    English = "Failed to retrieve categories",
                 },
                 ex
             );
@@ -282,18 +309,19 @@ public class CustomerCategoryDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+
+    // public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
-    public int? ParentId { get; set; }
-    public string? ParentName { get; set; }
-    public bool HasSubCategories { get; set; }
+    public int NumberOfOffers { get; set; }
+    public List<CustomerCategoryDto> SubCategories { get; set; } = [];
 }
 
 public class CategoryTreeDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+
+    // public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public List<CategoryTreeDto> SubCategories { get; set; } = [];
 }
@@ -302,7 +330,8 @@ public class CategoryListItemDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+
+    // public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public bool HasSubCategories { get; set; }
 }

@@ -5,7 +5,7 @@ namespace Mazad.Services;
 public interface IFileStorageService
 {
     Task<string> SaveFileAsync(IFormFile file, string directory);
-    Task<(byte[] FileContents, string ContentType)> GetFileAsync(string filePath);
+    // Task<(byte[] FileContents, string ContentType)> GetFileAsync(string filePath);
     bool DeleteFile(string filePath);
 }
 
@@ -18,7 +18,7 @@ public class FileStorageService : IFileStorageService
         { ".jpeg", "image/jpeg" },
         { ".png", "image/png" },
         { ".gif", "image/gif" },
-        { ".webp", "image/webp" }
+        { ".webp", "image/webp" },
     };
 
     public FileStorageService(IWebHostEnvironment environment)
@@ -46,7 +46,7 @@ public class FileStorageService : IFileStorageService
 
             // Normalize directory path and ensure it's relative
             directory = directory.Replace("\\", "/").TrimStart('/');
-            
+
             // Create directory if it doesn't exist
             var targetDirectory = Path.Combine(_baseStoragePath, directory);
             EnsureDirectoryExists(targetDirectory);
@@ -76,49 +76,49 @@ public class FileStorageService : IFileStorageService
         }
     }
 
-    public async Task<(byte[] FileContents, string ContentType)> GetFileAsync(string filePath)
-    {
-        try
-        {
-            // URL decode the path and normalize slashes
-            filePath = Uri.UnescapeDataString(filePath).Replace("\\", "/").TrimStart('/');
-            
-            // Remove any wwwroot/uploads prefix if it exists
-            filePath = filePath.Replace("wwwroot/uploads/", "").Replace("uploads/", "");
-            
-            var fullPath = Path.Combine(_baseStoragePath, filePath);
-            fullPath = Path.GetFullPath(fullPath); // Normalize the path
+    // public async Task<(byte[] FileContents, string ContentType)> GetFileAsync(string filePath)
+    // {
+    //     try
+    //     {
+    //         // URL decode the path and normalize slashes
+    //         filePath = Uri.UnescapeDataString(filePath).Replace("\\", "/").TrimStart('/');
 
-            // Security check - ensure the path is still under _baseStoragePath
-            if (!fullPath.StartsWith(_baseStoragePath))
-            {
-                throw new ArgumentException("Invalid file path");
-            }
+    //         // Remove any wwwroot/uploads prefix if it exists
+    //         filePath = filePath.Replace("wwwroot/uploads/", "").Replace("uploads/", "");
 
-            Console.WriteLine($"Attempting to read file from: {fullPath}");
+    //         var fullPath = Path.Combine(_baseStoragePath, filePath);
+    //         fullPath = Path.GetFullPath(fullPath); // Normalize the path
 
-            if (!File.Exists(fullPath))
-            {
-                Console.WriteLine($"File not found at path: {fullPath}");
-                throw new FileNotFoundException($"File not found at path: {filePath}");
-            }
+    //         // Security check - ensure the path is still under _baseStoragePath
+    //         if (!fullPath.StartsWith(_baseStoragePath))
+    //         {
+    //             throw new ArgumentException("Invalid file path");
+    //         }
 
-            var extension = Path.GetExtension(filePath).ToLowerInvariant();
-            if (!_allowedMimeTypes.TryGetValue(extension, out var contentType))
-            {
-                throw new ArgumentException($"Invalid file type: {extension}");
-            }
+    //         Console.WriteLine($"Attempting to read file from: {fullPath}");
 
-            var fileBytes = await File.ReadAllBytesAsync(fullPath);
-            return (fileBytes, contentType);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to retrieve file: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            throw;
-        }
-    }
+    //         if (!File.Exists(fullPath))
+    //         {
+    //             Console.WriteLine($"File not found at path: {fullPath}");
+    //             throw new FileNotFoundException($"File not found at path: {filePath}");
+    //         }
+
+    //         var extension = Path.GetExtension(filePath).ToLowerInvariant();
+    //         if (!_allowedMimeTypes.TryGetValue(extension, out var contentType))
+    //         {
+    //             throw new ArgumentException($"Invalid file type: {extension}");
+    //         }
+
+    //         var fileBytes = await File.ReadAllBytesAsync(fullPath);
+    //         return (fileBytes, contentType);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Failed to retrieve file: {ex.Message}");
+    //         Console.WriteLine($"Stack trace: {ex.StackTrace}");
+    //         throw;
+    //     }
+    // }
 
     public bool DeleteFile(string filePath)
     {
@@ -127,7 +127,7 @@ public class FileStorageService : IFileStorageService
             // Normalize file path and ensure it's relative
             filePath = filePath.Replace("\\", "/").TrimStart('/');
             var fullPath = Path.Combine(_baseStoragePath, filePath);
-            
+
             Console.WriteLine($"Attempting to delete file: {fullPath}");
 
             if (File.Exists(fullPath))
@@ -163,4 +163,4 @@ public class FileStorageService : IFileStorageService
             throw;
         }
     }
-} 
+}

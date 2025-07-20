@@ -12,11 +12,11 @@ namespace Mazad.Models
         [MaxLength(100)]
         public string NameAr { get; set; } = string.Empty;
 
-        [MaxLength(1000)]
-        public string DescriptionEn { get; set; } = string.Empty;
+        // [MaxLength(1000)]
+        // public string DescriptionEn { get; set; } = string.Empty;
 
-        [MaxLength(1000)]
-        public string DescriptionAr { get; set; } = string.Empty;
+        // [MaxLength(1000)]
+        // public string DescriptionAr { get; set; } = string.Empty;
         public int? ParentId { get; set; }
 
         [MaxLength(2000)]

@@ -2,7 +2,9 @@ using System.Security.Claims;
 using System.Text;
 using Mazad.Api.Infrastrcture;
 using Mazad.Core.Domain.Users.Authentication;
+using Mazad.Core.Shared;
 using Mazad.Core.Shared.Contexts;
+using Mazad.Core.Shared.Interfaces;
 using Mazad.Services;
 using Mazad.UseCases.UsersDomain.Otp;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,8 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Mazad.Core.Shared;
-using Mazad.Core.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -32,16 +32,18 @@ var interceptor = new BaseEntityInterceptor(timeProvider);
 
 // Configure DbContext with singleton interceptor
 builder.Services.AddDbContextFactory<MazadDbContext>(options =>
-    options.UseSqlServer(connectionString)
-           .AddInterceptors(interceptor));
+    options.UseSqlServer(connectionString).AddInterceptors(interceptor)
+);
 
 // Register scoped DbContext
-builder.Services.AddScoped<MazadDbContext>(sp => 
-    sp.GetRequiredService<IDbContextFactory<MazadDbContext>>().CreateDbContext());
+builder.Services.AddScoped<MazadDbContext>(sp =>
+    sp.GetRequiredService<IDbContextFactory<MazadDbContext>>().CreateDbContext()
+);
 
 // Register UnitOfWork
-builder.Services.AddScoped<IUnitOfWork>(provider => 
-    new UnitOfWork(provider.GetRequiredService<MazadDbContext>()));
+builder.Services.AddScoped<IUnitOfWork>(provider => new UnitOfWork(
+    provider.GetRequiredService<MazadDbContext>()
+));
 
 builder.Services.AddControllers();
 
@@ -123,22 +125,21 @@ builder.Services.AddAuthorization(options =>
 });
 
 // Configure CORS with specific origins
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() 
-    ?? new[] { "http://localhost:3000", "https://localhost:3000" }; // Default if not configured
+var allowedOrigins =
+    builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+    ?? new[]
+    {
+        "http://localhost:3000",
+        "https://localhost:3000",
+        "http://localhost:8080",
+        "https://localhost:8080",
+    };
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
-        "AllowAll",
-        builder =>
-        {
-            builder
-                .WithOrigins(allowedOrigins)
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials()
-                .WithExposedHeaders("Content-Disposition"); // For file downloads
-        }
+        "CorsPolicy",
+        b => b.SetIsOriginAllowed(_ => true).AllowAnyMethod().AllowAnyHeader().AllowCredentials()
     );
 });
 
@@ -158,7 +159,7 @@ app.UseMiddleware<DelayMiddleware>();
 app.UseHttpsRedirection();
 
 // Place CORS before routing and auth
-app.UseCors("AllowAll");
+app.UseCors("CorsPolicy");
 
 // Configure static files to serve from wwwroot
 app.UseStaticFiles();

@@ -17,6 +17,7 @@ public class MazadDbContext : DbContext
     public DbSet<Region> Regions { get; set; }
     public DbSet<Favorite> Favorites { get; set; }
     public DbSet<Follower> Followers { get; set; }
+    public DbSet<Slider> Sliders { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

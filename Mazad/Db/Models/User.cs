@@ -9,7 +9,7 @@ public class User : BaseEntity<int>
     public string Name { get; set; } = string.Empty;
 
     [MaxLength(100)]
-    public string? PhoneNumber { get; set; }
+    public string PhoneNumber { get; set; } = string.Empty;
 
     [MaxLength(2000)]
     public string? ProfilePhotoUrl { get; set; }

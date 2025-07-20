@@ -6,6 +6,7 @@ using Mazad.Api.Controllers;
 using Mazad.Core.Domain.Users.Authentication;
 using Mazad.Core.Shared.Contexts;
 using Mazad.Models;
+using Mazad.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,18 +14,20 @@ using Microsoft.EntityFrameworkCore;
 namespace Mazad.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/admin/categories")]
 public class AdminCategoryController : BaseController
 {
+    private readonly IWebHostEnvironment _environment;
     private readonly MazadDbContext _context;
 
-    public AdminCategoryController(MazadDbContext context)
+    public AdminCategoryController(MazadDbContext context, IWebHostEnvironment environment)
     {
         _context = context;
+        _environment = environment;
     }
 
     [HttpGet]
-    [Authorize(Policy = "Admin")]
+    // [Authorize(Policy = "Admin")]
     public async Task<IActionResult> GetCategories([FromQuery] GetCategoriesDto request)
     {
         try
@@ -33,17 +36,15 @@ public class AdminCategoryController : BaseController
             var isArabic = currentLanguage == "ar";
 
             // Start with base query
-            var query = _context.Categories
-                .Include(c => c.ParentCategory)
-                .AsQueryable();
+            var query = _context.Categories.Include(c => c.ParentCategory).AsQueryable();
 
             // Apply filters
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var searchTerm = request.SearchTerm.ToLower();
                 query = query.Where(c =>
-                    (isArabic ? c.NameAr : c.NameEn).ToLower().Contains(searchTerm) ||
-                    (isArabic ? c.DescriptionAr : c.DescriptionEn).ToLower().Contains(searchTerm)
+                    (isArabic ? c.NameAr : c.NameEn).ToLower().Contains(searchTerm)
+                // || (isArabic ? c.DescriptionAr : c.DescriptionEn).ToLower().Contains(searchTerm)
                 );
             }
 
@@ -68,19 +69,22 @@ public class AdminCategoryController : BaseController
             // Apply pagination
             var categories = await query
                 .OrderByDescending(c => c.CreatedAt)
-                .Skip((request.Page - 1) * request.PageSize)
+                .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .Select(c => new CategoryListDto
                 {
                     Id = c.Id,
                     Name = isArabic ? c.NameAr : c.NameEn,
-                    Description = isArabic ? c.DescriptionAr : c.DescriptionEn,
+                    // Description = isArabic ? c.DescriptionAr : c.DescriptionEn,
                     ImageUrl = c.ImageUrl,
                     IsActive = c.IsActive,
                     IsDeleted = c.IsDeleted,
                     ParentId = c.ParentId,
-                    ParentName = c.ParentCategory != null ? (isArabic ? c.ParentCategory.NameAr : c.ParentCategory.NameEn) : null,
-                    CreatedAt = c.CreatedAt
+                    ParentName =
+                        c.ParentCategory != null
+                            ? (isArabic ? c.ParentCategory.NameAr : c.ParentCategory.NameEn)
+                            : null,
+                    CreatedAt = c.CreatedAt,
                 })
                 .ToListAsync();
 
@@ -88,9 +92,9 @@ public class AdminCategoryController : BaseController
             {
                 Items = categories,
                 TotalCount = totalCount,
-                Page = request.Page,
+                Page = request.PageNumber,
                 PageSize = request.PageSize,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize),
             };
 
             return Represent(
@@ -99,7 +103,7 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم جلب الفئات بنجاح",
-                    English = "Categories retrieved successfully"
+                    English = "Categories retrieved successfully",
                 }
             );
         }
@@ -110,7 +114,7 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في جلب الفئات",
-                    English = "Failed to retrieve categories"
+                    English = "Failed to retrieve categories",
                 },
                 ex
             );
@@ -118,19 +122,35 @@ public class AdminCategoryController : BaseController
     }
 
     [HttpPost("create")]
-    [Authorize(Policy = "Admin")]
-    public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto request)
+    // [Authorize(Policy = "Admin")]
+    public async Task<IActionResult> CreateCategory([FromForm] CreateCategoryDto request)
     {
         try
         {
             var currentLanguage = GetLanguage();
             var isArabic = currentLanguage == "ar";
+            if (request.ImageUrl == null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "الرجاء ادخال صورة للفئة",
+                        English = "Please enter an image for the category",
+                    }
+                );
+            }
+            // save image to folder
+            var imageName = Guid.NewGuid().ToString();
+            var fileStorageService = new FileStorageService(_environment);
+            var imageUrl = await fileStorageService.SaveFileAsync(request.ImageUrl, "categories");
 
             // Validate parent category if specified
             if (request.ParentId.HasValue)
             {
-                var parentExists = await _context.Categories
-                    .AnyAsync(c => c.Id == request.ParentId.Value && !c.IsDeleted);
+                var parentExists = await _context.Categories.AnyAsync(c =>
+                    c.Id == request.ParentId.Value && !c.IsDeleted
+                );
 
                 if (!parentExists)
                 {
@@ -139,7 +159,7 @@ public class AdminCategoryController : BaseController
                         new LocalizedMessage
                         {
                             Arabic = "الفئة الأم غير موجودة",
-                            English = "Parent category not found"
+                            English = "Parent category not found",
                         }
                     );
                 }
@@ -150,11 +170,11 @@ public class AdminCategoryController : BaseController
             {
                 NameEn = request.NameEn,
                 NameAr = request.NameAr,
-                DescriptionEn = request.DescriptionEn,
-                DescriptionAr = request.DescriptionAr,
-                ImageUrl = request.ImageUrl,
+                // DescriptionEn = request.DescriptionEn,
+                // DescriptionAr = request.DescriptionAr,
+                ImageUrl = imageUrl,
                 ParentId = request.ParentId,
-                IsActive = true // Set default active state
+                IsActive = true, // Set default active state
             };
 
             // Add to database
@@ -166,10 +186,10 @@ public class AdminCategoryController : BaseController
             {
                 Id = category.Id,
                 Name = isArabic ? category.NameAr : category.NameEn,
-                Description = isArabic ? category.DescriptionAr : category.DescriptionEn,
+                // Description = isArabic ? category.DescriptionAr : category.DescriptionEn,
                 ImageUrl = category.ImageUrl,
                 IsActive = category.IsActive,
-                ParentId = category.ParentId
+                ParentId = category.ParentId,
             };
 
             return Represent(
@@ -178,7 +198,7 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم إنشاء الفئة بنجاح",
-                    English = "Category created successfully"
+                    English = "Category created successfully",
                 }
             );
         }
@@ -189,7 +209,7 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في إنشاء الفئة",
-                    English = "Failed to create category"
+                    English = "Failed to create category",
                 },
                 ex
             );
@@ -214,7 +234,7 @@ public class AdminCategoryController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "الفئة غير موجودة",
-                        English = "Category not found"
+                        English = "Category not found",
                     }
                 );
             }
@@ -222,8 +242,8 @@ public class AdminCategoryController : BaseController
             // Update category properties
             category.NameEn = request.NameEn;
             category.NameAr = request.NameAr;
-            category.DescriptionEn = request.DescriptionEn;
-            category.DescriptionAr = request.DescriptionAr;
+            // category.DescriptionEn = request.DescriptionEn;
+            // category.DescriptionAr = request.DescriptionAr;
             category.ImageUrl = request.ImageUrl;
             category.ParentId = request.ParentId;
 
@@ -235,10 +255,10 @@ public class AdminCategoryController : BaseController
             {
                 Id = category.Id,
                 Name = isArabic ? category.NameAr : category.NameEn,
-                Description = isArabic ? category.DescriptionAr : category.DescriptionEn,
+                // Description = isArabic ? category.DescriptionAr : category.DescriptionEn,
                 ImageUrl = category.ImageUrl,
                 IsActive = category.IsActive,
-                ParentId = category.ParentId
+                ParentId = category.ParentId,
             };
 
             return Represent(
@@ -247,7 +267,7 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم تحديث الفئة بنجاح",
-                    English = "Category updated successfully"
+                    English = "Category updated successfully",
                 }
             );
         }
@@ -258,7 +278,7 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في تحديث الفئة",
-                    English = "Failed to update category"
+                    English = "Failed to update category",
                 },
                 ex
             );
@@ -283,7 +303,7 @@ public class AdminCategoryController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "الفئة غير موجودة",
-                        English = "Category not found"
+                        English = "Category not found",
                     }
                 );
             }
@@ -299,7 +319,7 @@ public class AdminCategoryController : BaseController
             {
                 Id = category.Id,
                 Name = isArabic ? category.NameAr : category.NameEn,
-                IsActive = category.IsActive
+                IsActive = category.IsActive,
             };
 
             return Represent(
@@ -307,8 +327,12 @@ public class AdminCategoryController : BaseController
                 true,
                 new LocalizedMessage
                 {
-                    Arabic = category.IsActive ? "تم تفعيل الفئة بنجاح" : "تم إلغاء تفعيل الفئة بنجاح",
-                    English = category.IsActive ? "Category activated successfully" : "Category deactivated successfully"
+                    Arabic = category.IsActive
+                        ? "تم تفعيل الفئة بنجاح"
+                        : "تم إلغاء تفعيل الفئة بنجاح",
+                    English = category.IsActive
+                        ? "Category activated successfully"
+                        : "Category deactivated successfully",
                 }
             );
         }
@@ -319,11 +343,31 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في تغيير حالة التفعيل",
-                    English = "Failed to toggle activation status"
+                    English = "Failed to toggle activation status",
                 },
                 ex
             );
         }
+    }
+
+    [HttpGet("dropdown")]
+    public async Task<IActionResult> GetDropdown()
+    {
+        var currentLanguage = GetLanguage();
+        var isArabic = currentLanguage == "ar";
+        var categories = await _context
+            .Categories.Where(c => !c.IsDeleted && c.ParentId == null)
+            .Select(c => new { Id = c.Id, Name = isArabic ? c.NameAr : c.NameEn })
+            .ToListAsync();
+        return Represent(
+            categories,
+            true,
+            new LocalizedMessage
+            {
+                Arabic = "تم جلب الفئات بنجاح",
+                English = "Categories retrieved successfully",
+            }
+        );
     }
 
     [HttpDelete("delete/{id}")]
@@ -335,8 +379,8 @@ public class AdminCategoryController : BaseController
             var currentLanguage = GetLanguage();
             var isArabic = currentLanguage == "ar";
 
-            var category = await _context.Categories
-                .Include(c => c.SubCategories)
+            var category = await _context
+                .Categories.Include(c => c.SubCategories)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (category == null)
@@ -346,7 +390,7 @@ public class AdminCategoryController : BaseController
                     new LocalizedMessage
                     {
                         Arabic = "الفئة غير موجودة",
-                        English = "Category not found"
+                        English = "Category not found",
                     }
                 );
             }
@@ -367,7 +411,7 @@ public class AdminCategoryController : BaseController
                 Id = category.Id,
                 Name = isArabic ? category.NameAr : category.NameEn,
                 IsDeleted = category.IsDeleted,
-                DeletedSubcategoriesCount = category.SubCategories.Count
+                DeletedSubcategoriesCount = category.SubCategories.Count,
             };
 
             return Represent(
@@ -376,7 +420,7 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم حذف الفئة بنجاح",
-                    English = "Category deleted successfully"
+                    English = "Category deleted successfully",
                 }
             );
         }
@@ -387,7 +431,7 @@ public class AdminCategoryController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في حذف الفئة",
-                    English = "Failed to delete category"
+                    English = "Failed to delete category",
                 },
                 ex
             );
@@ -397,7 +441,7 @@ public class AdminCategoryController : BaseController
 
 public class GetCategoriesDto
 {
-    public int Page { get; set; } = 1;
+    public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
     public string? SearchTerm { get; set; }
     public bool? IsActive { get; set; }
@@ -431,9 +475,10 @@ public class CreateCategoryDto
 {
     public string NameEn { get; set; } = string.Empty;
     public string NameAr { get; set; } = string.Empty;
-    public string DescriptionEn { get; set; } = string.Empty;
-    public string DescriptionAr { get; set; } = string.Empty;
-    public string ImageUrl { get; set; } = string.Empty;
+
+    // public string DescriptionEn { get; set; } = string.Empty;
+    // public string DescriptionAr { get; set; } = string.Empty;
+    public IFormFile ImageUrl { get; set; }
     public int? ParentId { get; set; }
 }
 
@@ -441,8 +486,9 @@ public class UpdateCategoryDto
 {
     public string NameEn { get; set; } = string.Empty;
     public string NameAr { get; set; } = string.Empty;
-    public string DescriptionEn { get; set; } = string.Empty;
-    public string DescriptionAr { get; set; } = string.Empty;
+
+    // public string DescriptionEn { get; set; } = string.Empty;
+    // public string DescriptionAr { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public int? ParentId { get; set; }
 }
