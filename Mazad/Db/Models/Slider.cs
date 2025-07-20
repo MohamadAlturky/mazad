@@ -16,4 +16,8 @@ public class Slider : BaseEntity<int>
     public DateTime EndDate { get; set; }
 
     public string ImageUrl { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; } = true;
+
+    public bool IsDeleted { get; set; } = false;
 }

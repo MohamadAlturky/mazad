@@ -1,9 +1,9 @@
 using Mazad.Api.Controllers;
 using Mazad.Core.Shared.Contexts;
-using Microsoft.AspNetCore.Mvc;
-using Mazad.Services;
-using Microsoft.EntityFrameworkCore;
 using Mazad.Models;
+using Mazad.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Mazad.Controllers.Admin;
 
@@ -118,6 +118,15 @@ public class SliderController : BaseController
             if (request.IsActive.HasValue)
             {
                 query = query.Where(s => s.IsActive == request.IsActive.Value);
+            }
+
+            if (request.IsDeleted.HasValue)
+            {
+                query = query.Where(s => s.IsDeleted == request.IsDeleted.Value);
+            }
+            else
+            {
+                query = query.Where(s => !s.IsDeleted);
             }
 
             // Get total count for pagination
@@ -237,6 +246,129 @@ public class SliderController : BaseController
             );
         }
     }
+
+    [HttpPut("update/{id}")]
+    // [Authorize(Policy = "Admin")]
+    public async Task<IActionResult> UpdateSlider(int id, [FromForm] UpdateSliderDto request)
+    {
+        try
+        {
+            var currentLanguage = GetLanguage();
+            var isArabic = currentLanguage == "ar";
+
+            var slider = await _context.Sliders.FindAsync(id);
+
+            if (slider == null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "السلايدر غير موجود",
+                        English = "Slider not found",
+                    }
+                );
+            }
+
+            // Update slider properties
+            slider.NameEn = request.NameEn;
+            slider.NameAr = request.NameAr;
+            slider.StartDate = request.StartDate;
+            slider.EndDate = request.EndDate;
+
+            if (request.ImageUrl != null)
+            {
+                var fileStorageService = new FileStorageService(_environment);
+                slider.ImageUrl = await fileStorageService.SaveFileAsync(request.ImageUrl, "sliders");
+            }
+
+            // Save changes
+            await _context.SaveChangesAsync();
+
+            // Return localized response
+            var response = new
+            {
+                Id = slider.Id,
+                Name = isArabic ? slider.NameAr : slider.NameEn,
+                ImageUrl = slider.ImageUrl,
+                IsActive = slider.IsActive,
+                StartDate = slider.StartDate,
+                EndDate = slider.EndDate,
+            };
+
+            return Represent(
+                response,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم تحديث السلايدر بنجاح",
+                    English = "Slider updated successfully",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في تحديث السلايدر",
+                    English = "Failed to update slider",
+                },
+                ex
+            );
+        }
+    }
+
+    [HttpDelete("delete/{id}")]
+    // [Authorize(Policy = "Admin")]
+    public async Task<IActionResult> SoftDelete(int id)
+    {
+        try
+        {
+            var slider = await _context.Sliders.FindAsync(id);
+
+            if (slider == null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "السلايدر غير موجود",
+                        English = "Slider not found",
+                    }
+                );
+            }
+
+            // Soft delete the slider
+            slider.IsDeleted = true;
+
+            // Save changes
+            await _context.SaveChangesAsync();
+
+            // Return localized response
+            return Represent(
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم حذف السلايدر بنجاح",
+                    English = "Slider deleted successfully",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في حذف السلايدر",
+                    English = "Failed to delete slider",
+                },
+                ex
+            );
+        }
+    }
 }
 
 public class GetSlidersDto
@@ -245,6 +377,7 @@ public class GetSlidersDto
     public int PageSize { get; set; } = 10;
     public string? SearchTerm { get; set; }
     public bool? IsActive { get; set; }
+    public bool? IsDeleted { get; set; }
 }
 
 public class SliderListDto
@@ -265,4 +398,13 @@ public class CreateSliderDto
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public IFormFile ImageUrl { get; set; }
+}
+
+public class UpdateSliderDto
+{
+    public string NameEn { get; set; } = string.Empty;
+    public string NameAr { get; set; } = string.Empty;
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public IFormFile? ImageUrl { get; set; }
 }
