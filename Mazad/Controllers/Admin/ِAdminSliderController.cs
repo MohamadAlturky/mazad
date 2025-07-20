@@ -9,12 +9,12 @@ namespace Mazad.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/sliders")]
-public class SliderController : BaseController
+public class AdminSliderController : BaseController
 {
     private readonly IWebHostEnvironment _environment;
     private readonly MazadDbContext _context;
 
-    public SliderController(IWebHostEnvironment environment, MazadDbContext context)
+    public AdminSliderController(IWebHostEnvironment environment, MazadDbContext context)
     {
         _environment = environment;
         _context = context;
@@ -28,7 +28,7 @@ public class SliderController : BaseController
         {
             var currentLanguage = GetLanguage();
             var isArabic = currentLanguage == "ar";
-            if (request.ImageUrl == null)
+            if (request.Image == null)
             {
                 return Represent(
                     false,
@@ -42,7 +42,7 @@ public class SliderController : BaseController
             // save image to folder
             var imageName = Guid.NewGuid().ToString();
             var fileStorageService = new FileStorageService(_environment);
-            var imageUrl = await fileStorageService.SaveFileAsync(request.ImageUrl, "sliders");
+            var imageUrl = await fileStorageService.SaveFileAsync(request.Image, "sliders");
 
             // Create new slider
             var slider = new Slider
@@ -279,7 +279,10 @@ public class SliderController : BaseController
             if (request.ImageUrl != null)
             {
                 var fileStorageService = new FileStorageService(_environment);
-                slider.ImageUrl = await fileStorageService.SaveFileAsync(request.ImageUrl, "sliders");
+                slider.ImageUrl = await fileStorageService.SaveFileAsync(
+                    request.ImageUrl,
+                    "sliders"
+                );
             }
 
             // Save changes
@@ -379,7 +382,6 @@ public class GetSlidersDto
     public bool? IsActive { get; set; }
     public bool? IsDeleted { get; set; }
 }
-
 public class SliderListDto
 {
     public int Id { get; set; }
@@ -397,7 +399,7 @@ public class CreateSliderDto
     public string NameAr { get; set; } = string.Empty;
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    public IFormFile ImageUrl { get; set; }
+    public IFormFile Image { get; set; }
 }
 
 public class UpdateSliderDto
@@ -408,3 +410,4 @@ public class UpdateSliderDto
     public DateTime EndDate { get; set; }
     public IFormFile? ImageUrl { get; set; }
 }
+
