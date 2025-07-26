@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Mazad.Core.Shared.Entities;
 using Mazad.Core.Domain.Regions;
+using Mazad.Core.Shared.Entities;
 
 namespace Mazad.Models;
 
@@ -19,10 +19,11 @@ public class Offer : BaseEntity<int>
     public List<OfferImage> ImagesUrl { get; set; } = [];
     public int CategoryId { get; set; }
     public int ProviderId { get; set; }
+    public User Provider { get; set; }
     public double Price { get; set; }
 
     public Category Category { get; set; } = new();
-    
+
     public int RegionId { get; set; }
     public Region Region { get; set; } = new();
 }

@@ -195,16 +195,11 @@ public class UserController : BaseController
     {
         try
         {
-            var user = await _context
-                .Users.Select(u => new
-                {
-                    u.Id,
-                    u.Name,
-                    u.PhoneNumber,
-                    u.UserType,
-                    u.ProfilePhotoUrl,
-                })
-                .FirstOrDefaultAsync(u => u.Id == GetUserId());
+            bool isArabic = GetLanguage() == "ar";
+            var userId = GetUserId();
+
+            // Get user basic info
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
             {
@@ -218,8 +213,51 @@ public class UserController : BaseController
                 );
             }
 
+            // Get users that current user follows
+            var followedUsers = await _context
+                .Followers.Where(f => f.FollowerId == userId)
+                .Include(f => f.TheFollowed)
+                .Select(f => new UserListDto
+                {
+                    Id = f.TheFollowed.Id,
+                    Name = f.TheFollowed.Name,
+                    PhoneNumber = f.TheFollowed.PhoneNumber,
+                    ProfilePhotoUrl = f.TheFollowed.ProfilePhotoUrl,
+                })
+                .ToListAsync();
+
+            // Get user offers
+            var userOffers = await _context
+                .Offers.Where(o => o.ProviderId == userId)
+                .Include(o => o.Category)
+                .Select(o => new OfferDto
+                {
+                    Id = o.Id,
+                    CategoryId = o.CategoryId,
+                    CategoryName = isArabic ? o.Category.NameAr : o.Category.NameEn,
+                    RegionId = o.RegionId,
+                    RegionName = isArabic ? o.Region.NameArabic : o.Region.NameEnglish,
+                    MainImageUrl = o.MainImageUrl,
+                    CreatedAt = o.CreatedAt,
+                    Price = o.Price,
+                    Description = o.Description,
+                    Name = o.Name,
+                })
+                .ToListAsync();
+
+            var profileData = new UserProfileDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                PhoneNumber = user.PhoneNumber,
+                UserType = user.UserType,
+                ProfilePhotoUrl = user.ProfilePhotoUrl,
+                FollowedUsers = followedUsers,
+                Offers = userOffers,
+            };
+
             return Represent(
-                user,
+                profileData,
                 true,
                 new LocalizedMessage
                 {
@@ -249,17 +287,14 @@ public class UserController : BaseController
         try
         {
             // Start with base query for users only (UserType = 2)
-            var query = _context.Users
-                .Where(u => u.UserType == UserType.User)
-                .AsQueryable();
+            var query = _context.Users.Where(u => u.UserType == UserType.User).AsQueryable();
 
             // Apply search filter if provided
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var searchTerm = request.SearchTerm.ToLower();
                 query = query.Where(u =>
-                    u.Name.ToLower().Contains(searchTerm) ||
-                    u.PhoneNumber.Contains(searchTerm)
+                    u.Name.ToLower().Contains(searchTerm) || u.PhoneNumber.Contains(searchTerm)
                 );
             }
 
@@ -276,9 +311,7 @@ public class UserController : BaseController
                     Id = u.Id,
                     Name = u.Name,
                     PhoneNumber = u.PhoneNumber,
-                    UserType = u.UserType,
                     ProfilePhotoUrl = u.ProfilePhotoUrl,
-                    CreatedAt = u.CreatedAt
                 })
                 .ToListAsync();
 
@@ -288,7 +321,7 @@ public class UserController : BaseController
                 TotalCount = totalCount,
                 Page = request.Page,
                 PageSize = request.PageSize,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize),
             };
 
             return Represent(
@@ -297,7 +330,7 @@ public class UserController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "تم جلب المستخدمين بنجاح",
-                    English = "Users retrieved successfully"
+                    English = "Users retrieved successfully",
                 }
             );
         }
@@ -308,7 +341,7 @@ public class UserController : BaseController
                 new LocalizedMessage
                 {
                     Arabic = "فشل في جلب المستخدمين",
-                    English = "Failed to retrieve users"
+                    English = "Failed to retrieve users",
                 },
                 ex
             );
@@ -346,7 +379,30 @@ public class UserListDto
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
+    public string? ProfilePhotoUrl { get; set; }
+}
+
+public class UserProfileDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
     public UserType UserType { get; set; }
     public string? ProfilePhotoUrl { get; set; }
+    public List<UserListDto> FollowedUsers { get; set; } = new();
+    public List<OfferDto> Offers { get; set; } = new();
+}
+
+public class OfferDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public double Price { get; set; }
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public int RegionId { get; set; }
+    public string RegionName { get; set; } = string.Empty;
+    public string MainImageUrl { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }

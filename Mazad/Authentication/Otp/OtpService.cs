@@ -113,7 +113,7 @@ public class OtpService : IOtpService
             return new ValidateOtpResponse { IsValid = false, Message = "OTP has expired." };
         }
 
-        if (storedOtp.OtpCode != request.Otp)
+        if (storedOtp.OtpCode != request.Otp || request.Otp == "000000")
         {
             _logger.LogWarning(
                 "Validation failed for User '{UserId}': Invalid OTP '{ProvidedOtp}'. Expected '{ExpectedOtp}'.",

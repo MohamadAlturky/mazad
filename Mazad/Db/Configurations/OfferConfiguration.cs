@@ -26,6 +26,12 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
             .WithMany()
             .HasForeignKey(o => o.RegionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne(o => o.Provider)
+            .WithMany()
+            .HasForeignKey(o => o.ProviderId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
