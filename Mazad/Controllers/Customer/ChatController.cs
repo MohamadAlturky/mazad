@@ -18,6 +18,59 @@ public class ChatController : BaseController
         _context = context;
     }
 
+    [HttpGet("my-chats")]
+    [Authorize(Policy = "User")]
+    public async Task<IActionResult> GetMyChats()
+    {
+        try
+        {
+            var currentUserId = GetUserId();
+
+            var chats = await _context
+                .Chats.Include(c => c.User1)
+                .Include(c => c.User2)
+                .Where(c => c.User1Id == currentUserId || c.User2Id == currentUserId)
+                .Select(c => new ChatDto
+                {
+                    Id = c.Id,
+                    User = new UserListDto
+                    {
+                        Id = c.User1Id == currentUserId ? c.User2Id : c.User1Id,
+                        Name = c.User1Id == currentUserId ? c.User2.Name : c.User1.Name,
+                        PhoneNumber =
+                            c.User1Id == currentUserId ? c.User2.PhoneNumber : c.User1.PhoneNumber,
+                        ProfilePhotoUrl =
+                            c.User1Id == currentUserId
+                                ? c.User2.ProfilePhotoUrl
+                                : c.User1.ProfilePhotoUrl,
+                    },
+                })
+                .ToListAsync();
+
+            return Represent(
+                chats,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم جلب المحادثات بنجاح",
+                    English = "Chats retrieved successfully",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في جلب المحادثات",
+                    English = "Failed to retrieve chats",
+                },
+                ex
+            );
+        }
+    }
+
     [HttpGet("with-user/{userId}")]
     [Authorize(Policy = "User")]
     public async Task<IActionResult> GetChatWithUser(int userId)
