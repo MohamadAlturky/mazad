@@ -19,6 +19,8 @@ public class MazadDbContext : DbContext
     public DbSet<Follower> Followers { get; set; }
     public DbSet<Slider> Sliders { get; set; }
     public DbSet<OfferComment> OfferComments { get; set; }
+    public DbSet<Chat> Chats { get; set; }
+    public DbSet<ChatMessage> ChatMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
