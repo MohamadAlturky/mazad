@@ -1,5 +1,6 @@
 ﻿using Mazad.Api.Controllers;
 using Mazad.Core.Domain.Regions;
+using Mazad.Core.Shared.Contexts;
 using Mazad.Core.Shared.Interfaces;
 using Mazad.Models;
 using Mazad.Services;
@@ -13,12 +14,12 @@ namespace Mazad.Controllers;
 [Route("api/offers")]
 public class CustomerOfferController : BaseController
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly MazadDbContext _context;
     private readonly IFileStorageService _fileStorageService;
 
-    public CustomerOfferController(IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
+    public CustomerOfferController(MazadDbContext context, IFileStorageService fileStorageService)
     {
-        _unitOfWork = unitOfWork;
+        _context = context;
         _fileStorageService = fileStorageService;
     }
 
@@ -28,8 +29,8 @@ public class CustomerOfferController : BaseController
         bool isArabic = GetLanguage() == "ar";
         try
         {
-            var offer = await _unitOfWork
-                .Context.Set<Offer>()
+            var offer = await _context
+                .Set<Offer>()
                 .Include(o => o.Category)
                 .Include(o => o.Region)
                 .Include(o => o.Provider)
@@ -102,8 +103,8 @@ public class CustomerOfferController : BaseController
             var limit = request.Limit <= 0 ? 10 : Math.Min(request.Limit, 50);
 
             // Start with the base query
-            var query = _unitOfWork
-                .Context.Set<Offer>()
+            var query = _context
+                .Set<Offer>()
                 .Include(o => o.Category)
                 .Include(o => o.Region)
                 .Where(o => !o.IsDeleted && o.IsActive);
@@ -220,7 +221,7 @@ public class CustomerOfferController : BaseController
     [Authorize(Policy = "User")]
     public async Task<IActionResult> CreateOffer([FromForm] CreateOfferDto request)
     {
-        await _unitOfWork.BeginTransactionAsync();
+        await _context.Database.BeginTransactionAsync();
 
         try
         {
@@ -259,8 +260,8 @@ public class CustomerOfferController : BaseController
 
             // Validate category exists - with explicit query logging
             var categoryId = request.CategoryId;
-            var category = await _unitOfWork
-                .Context.Set<Category>()
+            var category = await _context
+                .Set<Category>()
                 .Where(c => !c.IsDeleted && c.Id == categoryId)
                 .FirstOrDefaultAsync(); // Get the full entity
 
@@ -279,8 +280,8 @@ public class CustomerOfferController : BaseController
 
             // Validate region exists
             var regionId = request.RegionId;
-            var region = await _unitOfWork
-                .Context.Set<Region>()
+            var region = await _context
+                .Set<Region>()
                 .Where(r => !r.IsDeleted && r.Id == regionId)
                 .FirstOrDefaultAsync();
 
@@ -338,8 +339,8 @@ public class CustomerOfferController : BaseController
             };
 
             // Save offer to get its ID
-            await _unitOfWork.Context.Set<Offer>().AddAsync(offer);
-            await _unitOfWork.SaveChangesAsync();
+            await _context.Set<Offer>().AddAsync(offer);
+            await _context.SaveChangesAsync();
 
             Console.WriteLine(
                 $"Created offer - ID: {offer.Id}, CategoryId: {category.Id}, RegionId: {region.Id}"
@@ -356,9 +357,9 @@ public class CustomerOfferController : BaseController
                 offer.MainImageUrl = mainImageUrl;
 
                 // Update the offer with the main image URL
-                _unitOfWork.Context.Entry(offer).Property(x => x.MainImageUrl).IsModified = true;
-                _unitOfWork.Context.Entry(offer).Property(x => x.UpdatedAt).IsModified = true;
-                await _unitOfWork.SaveChangesAsync();
+                _context.Entry(offer).Property(x => x.MainImageUrl).IsModified = true;
+                _context.Entry(offer).Property(x => x.UpdatedAt).IsModified = true;
+                await _context.SaveChangesAsync();
 
                 Console.WriteLine($"Saved main image: {mainImageUrl}");
             }
@@ -397,17 +398,17 @@ public class CustomerOfferController : BaseController
 
                 if (offerImages.Any())
                 {
-                    await _unitOfWork.Context.Set<OfferImage>().AddRangeAsync(offerImages);
-                    await _unitOfWork.SaveChangesAsync();
+                    await _context.Set<OfferImage>().AddRangeAsync(offerImages);
+                    await _context.SaveChangesAsync();
                     Console.WriteLine($"Saved {offerImages.Count} additional images to database");
                 }
             }
 
-            await _unitOfWork.CommitAsync();
+            await _context.Database.CommitTransactionAsync();
 
             // Get the complete offer with images - using tracked category and region
-            var createdOffer = await _unitOfWork
-                .Context.Set<Offer>()
+            var createdOffer = await _context
+                .Set<Offer>()
                 .Include(o => o.Category)
                 .Include(o => o.Region)
                 .Include(o => o.ImagesUrl.Where(i => !i.IsDeleted))
@@ -450,7 +451,7 @@ public class CustomerOfferController : BaseController
         }
         catch (Exception ex)
         {
-            await _unitOfWork.RollbackAsync();
+            await _context.Database.RollbackTransactionAsync();
 
             Console.WriteLine($"Error creating offer: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
@@ -461,6 +462,332 @@ public class CustomerOfferController : BaseController
                 {
                     Arabic = "فشل في إنشاء العرض",
                     English = "Failed to create offer",
+                },
+                ex
+            );
+        }
+    }
+
+    [HttpPost("{offerId}/comments")]
+    [Authorize(Policy = "User")]
+    public async Task<IActionResult> CreateComment(int offerId, [FromBody] CreateCommentDto request)
+    {
+        try
+        {
+            // Validate offer exists
+            var offer = await _context.Offers.FirstOrDefaultAsync(o =>
+                o.Id == offerId && !o.IsDeleted && o.IsActive
+            );
+
+            if (offer is null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage { Arabic = "العرض غير موجود", English = "Offer not found" }
+                );
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == GetUserId());
+            if (user is null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "المستخدم غير موجود",
+                        English = "User not found",
+                    }
+                );
+            }
+            OfferComment? parentComment = null;
+
+            // If it's a reply, validate parent comment exists
+            if (request.ReplyToCommentId.HasValue)
+            {
+                parentComment = await _context.OfferComments.FirstOrDefaultAsync(c =>
+                    c.Id == request.ReplyToCommentId.Value && c.OfferId == offerId && !c.IsDeleted
+                );
+
+                if (parentComment is null)
+                {
+                    return Represent(
+                        false,
+                        new LocalizedMessage
+                        {
+                            Arabic = "التعليق الأصلي غير موجود",
+                            English = "Parent comment not found",
+                        }
+                    );
+                }
+            }
+
+            var now = DateTime.UtcNow;
+            var userId = GetUserId();
+            var comment = new OfferComment
+            {
+                Comment = request.Comment,
+                CreatedAt = now,
+                UpdatedAt = now,
+                Offer = offer,
+                User = user,
+                ReplyToComment = parentComment,
+                IsActive = true,
+                IsDeleted = false,
+            };
+
+            _context.OfferComments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            var createdComment = await _context
+                .OfferComments.Include(c => c.User)
+                .Where(c => c.Id == comment.Id)
+                .Select(c => new CommentDto
+                {
+                    Id = c.Id,
+                    Comment = c.Comment,
+                    OfferId = c.OfferId,
+                    UserId = c.UserId,
+                    UserName = c.User.Name,
+                    UserProfilePhotoUrl = c.User.ProfilePhotoUrl,
+                    ReplyToCommentId = c.ReplyToCommentId,
+                    CreatedAt = c.CreatedAt,
+                    RepliesCount = c.ChildrenComments.Count(),
+                })
+                .FirstOrDefaultAsync();
+
+            return Represent(
+                createdComment,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم إضافة التعليق بنجاح",
+                    English = "Comment added successfully",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating comment: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في إضافة التعليق",
+                    English = "Failed to add comment",
+                },
+                ex
+            );
+        }
+    }
+
+    [HttpGet("{offerId}/comments")]
+    public async Task<IActionResult> GetOfferComments(
+        int offerId,
+        [FromQuery] GetCommentsRequestDto request
+    )
+    {
+        try
+        {
+            // Check if offer exists
+            var offerExists = await _context
+                .Set<Offer>()
+                .AnyAsync(o => o.Id == offerId && !o.IsDeleted && o.IsActive);
+
+            if (!offerExists)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage { Arabic = "العرض غير موجود", English = "Offer not found" }
+                );
+            }
+
+            // Default limit if not provided or invalid
+            var limit = request.Limit <= 0 ? 10 : Math.Min(request.Limit, 50);
+
+            // Query root level comments only (not replies)
+            var query = _context
+                .Set<OfferComment>()
+                .Include(c => c.User)
+                .Where(c => c.OfferId == offerId && !c.IsDeleted && c.ReplyToCommentId == null);
+
+            // Apply cursor pagination
+            if (request.Cursor.HasValue)
+            {
+                query = request.SortDescending
+                    ? query.Where(c => c.Id < request.Cursor) // Get items before cursor for descending order
+                    : query.Where(c => c.Id > request.Cursor); // Get items after cursor for ascending order
+            }
+
+            // Apply ordering
+            query = request.SortDescending
+                ? query.OrderByDescending(c => c.Id)
+                : query.OrderBy(c => c.Id);
+
+            // Execute query with limit
+            var comments = await query
+                .Take(limit + 1) // Get one extra item to determine if there are more results
+                .Select(c => new CommentDto
+                {
+                    Id = c.Id,
+                    Comment = c.Comment,
+                    OfferId = c.OfferId,
+                    UserId = c.UserId,
+                    UserName = c.User.Name,
+                    UserProfilePhotoUrl = c.User.ProfilePhotoUrl,
+                    ReplyToCommentId = c.ReplyToCommentId,
+                    CreatedAt = c.CreatedAt,
+                    RepliesCount = c.ChildrenComments.Count(),
+                })
+                .ToListAsync();
+
+            // Check if there are more results
+            var hasMore = comments.Count > limit;
+            if (hasMore)
+            {
+                comments.RemoveAt(comments.Count - 1); // Remove the extra item
+            }
+
+            // Get the next cursor
+            int? nextCursor = comments.Count > 0 ? comments[comments.Count - 1].Id : null;
+
+            var response = new GetCommentsResponseDto
+            {
+                Items = comments,
+                HasMore = hasMore,
+                NextCursor = nextCursor,
+            };
+
+            return Represent(
+                response,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم استرجاع التعليقات بنجاح",
+                    English = "Comments retrieved successfully",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error retrieving comments: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في استرجاع التعليقات",
+                    English = "Failed to retrieve comments",
+                },
+                ex
+            );
+        }
+    }
+
+    [HttpGet("comments/{commentId}/replies")]
+    public async Task<IActionResult> GetCommentReplies(
+        int commentId,
+        [FromQuery] GetCommentsRequestDto request
+    )
+    {
+        try
+        {
+            // Check if parent comment exists
+            var parentComment = await _context
+                .Set<OfferComment>()
+                .FirstOrDefaultAsync(c => c.Id == commentId && !c.IsDeleted);
+
+            if (parentComment == null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "التعليق غير موجود",
+                        English = "Comment not found",
+                    }
+                );
+            }
+
+            // Default limit if not provided or invalid
+            var limit = request.Limit <= 0 ? 10 : Math.Min(request.Limit, 50);
+
+            // Query replies to the specified comment
+            var query = _context
+                .Set<OfferComment>()
+                .Include(c => c.User)
+                .Where(c => c.ReplyToCommentId == commentId && !c.IsDeleted);
+
+            // Apply cursor pagination
+            if (request.Cursor.HasValue)
+            {
+                query = request.SortDescending
+                    ? query.Where(c => c.Id < request.Cursor) // Get items before cursor for descending order
+                    : query.Where(c => c.Id > request.Cursor); // Get items after cursor for ascending order
+            }
+
+            // Apply ordering
+            query = request.SortDescending
+                ? query.OrderByDescending(c => c.Id)
+                : query.OrderBy(c => c.Id);
+
+            // Execute query with limit
+            var replies = await query
+                .Take(limit + 1) // Get one extra item to determine if there are more results
+                .Select(c => new CommentDto
+                {
+                    Id = c.Id,
+                    Comment = c.Comment,
+                    OfferId = c.OfferId,
+                    UserId = c.UserId,
+                    UserName = c.User.Name,
+                    UserProfilePhotoUrl = c.User.ProfilePhotoUrl,
+                    ReplyToCommentId = c.ReplyToCommentId,
+                    CreatedAt = c.CreatedAt,
+                    RepliesCount = 0, // No nested replies, so always 0
+                })
+                .ToListAsync();
+
+            // Check if there are more results
+            var hasMore = replies.Count > limit;
+            if (hasMore)
+            {
+                replies.RemoveAt(replies.Count - 1); // Remove the extra item
+            }
+
+            // Get the next cursor
+            int? nextCursor = replies.Count > 0 ? replies[replies.Count - 1].Id : null;
+
+            var response = new GetCommentsResponseDto
+            {
+                Items = replies,
+                HasMore = hasMore,
+                NextCursor = nextCursor,
+            };
+
+            return Represent(
+                response,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم استرجاع الردود بنجاح",
+                    English = "Replies retrieved successfully",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error retrieving replies: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في استرجاع الردود",
+                    English = "Failed to retrieve replies",
                 },
                 ex
             );
@@ -530,4 +857,37 @@ public class OfferDetailsPageDto
     public string ProviderPhoneNumber { get; set; } = string.Empty;
     public string? ProviderProfilePhotoUrl { get; set; } = string.Empty;
     public string ProviderCreatedAt { get; set; }
+}
+
+public class CreateCommentDto
+{
+    public string Comment { get; set; } = string.Empty;
+    public int? ReplyToCommentId { get; set; }
+}
+
+public class CommentDto
+{
+    public int Id { get; set; }
+    public string Comment { get; set; } = string.Empty;
+    public int OfferId { get; set; }
+    public int UserId { get; set; }
+    public string UserName { get; set; } = string.Empty;
+    public string? UserProfilePhotoUrl { get; set; }
+    public int? ReplyToCommentId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int RepliesCount { get; set; }
+}
+
+public class GetCommentsRequestDto
+{
+    public int? Cursor { get; set; }
+    public int Limit { get; set; } = 10;
+    public bool SortDescending { get; set; } = true;
+}
+
+public class GetCommentsResponseDto
+{
+    public List<CommentDto> Items { get; set; } = new();
+    public bool HasMore { get; set; }
+    public int? NextCursor { get; set; }
 }

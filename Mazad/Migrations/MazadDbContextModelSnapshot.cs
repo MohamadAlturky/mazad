@@ -245,9 +245,59 @@ namespace Mazad.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("ProviderId");
+
                     b.HasIndex("RegionId");
 
                     b.ToTable("Offers", "dbo");
+                });
+
+            modelBuilder.Entity("Mazad.Models.OfferComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("OfferId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReplyToCommentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferId");
+
+                    b.HasIndex("ReplyToCommentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("OfferComments", "dbo");
                 });
 
             modelBuilder.Entity("Mazad.Models.OfferImage", b =>
@@ -462,6 +512,12 @@ namespace Mazad.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Mazad.Models.User", "Provider")
+                        .WithMany()
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Mazad.Core.Domain.Regions.Region", "Region")
                         .WithMany()
                         .HasForeignKey("RegionId")
@@ -470,7 +526,35 @@ namespace Mazad.Migrations
 
                     b.Navigation("Category");
 
+                    b.Navigation("Provider");
+
                     b.Navigation("Region");
+                });
+
+            modelBuilder.Entity("Mazad.Models.OfferComment", b =>
+                {
+                    b.HasOne("Mazad.Models.Offer", "Offer")
+                        .WithMany("Comments")
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mazad.Models.OfferComment", "ReplyToComment")
+                        .WithMany("ChildrenComments")
+                        .HasForeignKey("ReplyToCommentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mazad.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Offer");
+
+                    b.Navigation("ReplyToComment");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Mazad.Models.OfferImage", b =>
@@ -498,7 +582,14 @@ namespace Mazad.Migrations
 
             modelBuilder.Entity("Mazad.Models.Offer", b =>
                 {
+                    b.Navigation("Comments");
+
                     b.Navigation("ImagesUrl");
+                });
+
+            modelBuilder.Entity("Mazad.Models.OfferComment", b =>
+                {
+                    b.Navigation("ChildrenComments");
                 });
 #pragma warning restore 612, 618
         }

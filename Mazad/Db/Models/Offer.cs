@@ -23,6 +23,7 @@ public class Offer : BaseEntity<int>
     public double Price { get; set; }
 
     public Category Category { get; set; } = new();
+    public List<OfferComment> Comments { get; set; } = [];
 
     public int RegionId { get; set; }
     public Region Region { get; set; } = new();
@@ -35,4 +36,20 @@ public class OfferImage : BaseEntity<int>
 
     [MaxLength(2000)]
     public string ImageUrl { get; set; } = string.Empty;
+}
+
+public class OfferComment : BaseEntity<int>
+{
+    public int OfferId { get; set; }
+    public Offer Offer { get; set; }
+
+    public int UserId { get; set; }
+    public User User { get; set; }
+
+    [MaxLength(5000)]
+    public string Comment { get; set; } = string.Empty;
+
+    public int? ReplyToCommentId { get; set; }
+    public OfferComment? ReplyToComment { get; set; }
+    public List<OfferComment> ChildrenComments { get; set; } = [];
 }

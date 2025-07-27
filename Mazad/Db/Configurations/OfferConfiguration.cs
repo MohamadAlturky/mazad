@@ -1,7 +1,7 @@
+using Mazad.Core.Domain.Regions;
 using Mazad.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Mazad.Core.Domain.Regions;
 
 namespace Mazad.Core.Domain.Users.Db;
 

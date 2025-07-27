@@ -12,7 +12,7 @@ public class User : BaseEntity<int>
     public string PhoneNumber { get; set; } = string.Empty;
 
     [MaxLength(2000)]
-    public string? ProfilePhotoUrl { get; set; }
+    public string? ProfilePhotoUrl { get; set; } = "placeholder.png";
 
     public UserType UserType { get; set; }
 
