@@ -66,19 +66,18 @@ public class ChatController : BaseController
             var chatDto = new ChatDto
             {
                 Id = chat.Id,
-                User1 = new UserListDto
+                User = new UserListDto
                 {
-                    Id = chat.User1.Id,
-                    Name = chat.User1.Name,
-                    PhoneNumber = chat.User1.PhoneNumber,
-                    ProfilePhotoUrl = chat.User1.ProfilePhotoUrl,
-                },
-                User2 = new UserListDto
-                {
-                    Id = chat.User2.Id,
-                    Name = chat.User2.Name,
-                    PhoneNumber = chat.User2.PhoneNumber,
-                    ProfilePhotoUrl = chat.User2.ProfilePhotoUrl,
+                    Id = chat.User1.Id == currentUserId ? chat.User2.Id : chat.User1.Id,
+                    Name = chat.User1.Id == currentUserId ? chat.User2.Name : chat.User1.Name,
+                    PhoneNumber =
+                        chat.User1.Id == currentUserId
+                            ? chat.User2.PhoneNumber
+                            : chat.User1.PhoneNumber,
+                    ProfilePhotoUrl =
+                        chat.User1.Id == currentUserId
+                            ? chat.User2.ProfilePhotoUrl
+                            : chat.User1.ProfilePhotoUrl,
                 },
             };
 
@@ -302,8 +301,7 @@ public class ChatController : BaseController
 public class ChatDto
 {
     public int Id { get; set; }
-    public UserListDto User1 { get; set; }
-    public UserListDto User2 { get; set; }
+    public UserListDto User { get; set; }
 }
 
 public class ChatMessageDto
