@@ -180,6 +180,9 @@ public class CustomerOfferController : BaseController
                     RegionName = isArabic ? o.Region.NameArabic : o.Region.NameEnglish,
                     MainImageUrl = o.MainImageUrl,
                     CreatedAt = o.CreatedAt,
+                    NumberOfComments = o.Comments.Count,
+                    NumberOfFavorites = o.Favorites.Count,
+                    NumberOfViews = o.NumberOfViews,
                 })
                 .ToListAsync();
 
@@ -931,6 +934,9 @@ public class OfferPaginatedItemDto
     public string RegionName { get; set; } = string.Empty;
     public string MainImageUrl { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public int NumberOfFavorites { get; set; }
+    public int NumberOfViews { get; set; }
+    public int NumberOfComments { get; set; }
 }
 
 public class OfferDetailsPageDto
