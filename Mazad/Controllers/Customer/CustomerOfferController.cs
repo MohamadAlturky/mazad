@@ -55,6 +55,9 @@ public class CustomerOfferController : BaseController
                     ProviderPhoneNumber = o.Provider.PhoneNumber,
                     ProviderProfilePhotoUrl = o.Provider.ProfilePhotoUrl,
                     ProviderCreatedAt = o.Provider.CreatedAt.ToString("yyyy-MM-dd"),
+                    IsFavorite = o.Favorites.Any(f => f.UserId == GetUserId()),
+                    NumberOfFavorites = o.Favorites.Count,
+                    NumberOfViews = o.NumberOfViews,
                 })
                 .FirstOrDefaultAsync();
 
@@ -65,6 +68,13 @@ public class CustomerOfferController : BaseController
                     new LocalizedMessage { Arabic = "العرض غير موجود", English = "Offer not found" }
                 );
             }
+
+            await _context
+                .Offers.Where(e => e.Id == id)
+                .ExecuteUpdateAsync(e =>
+                    e.SetProperty(o => o.NumberOfViews, o => o.NumberOfViews + 1)
+                );
+            await _context.SaveChangesAsync();
 
             return Represent(
                 offer,
@@ -793,6 +803,91 @@ public class CustomerOfferController : BaseController
             );
         }
     }
+
+    [HttpPost("{offerId}/favorite")]
+    [Authorize(Policy = "User")]
+    public async Task<IActionResult> ToggleOfferFavorite(int offerId)
+    {
+        try
+        {
+            var userId = GetUserId();
+
+            // Check if the offer exists
+            var offer = await _context.Offers.FirstOrDefaultAsync(o =>
+                o.Id == offerId && !o.IsDeleted && o.IsActive
+            );
+
+            if (offer == null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage { Arabic = "العرض غير موجود", English = "Offer not found" }
+                );
+            }
+
+            // Check if the offer is already in favorites
+            var existingFavorite = await _context.Favorites.FirstOrDefaultAsync(f =>
+                f.UserId == userId && f.OfferId == offerId && !f.IsDeleted
+            );
+
+            if (existingFavorite != null)
+            {
+                // If it exists, remove from favorites
+                _context.Favorites.Remove(existingFavorite);
+                await _context.SaveChangesAsync();
+
+                return Represent(
+                    true,
+                    new LocalizedMessage
+                    {
+                        Arabic = "تم إزالة العرض من المفضلة",
+                        English = "Offer removed from favorites",
+                    }
+                );
+            }
+            else
+            {
+                // If it doesn't exist, add to favorites
+                var now = DateTime.UtcNow;
+                var favorite = new Favorite
+                {
+                    UserId = userId,
+                    OfferId = offerId,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                    IsActive = true,
+                    IsDeleted = false,
+                };
+
+                await _context.Favorites.AddAsync(favorite);
+                await _context.SaveChangesAsync();
+
+                return Represent(
+                    true,
+                    new LocalizedMessage
+                    {
+                        Arabic = "تم إضافة العرض إلى المفضلة",
+                        English = "Offer added to favorites",
+                    }
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling favorite: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في تحديث المفضلة",
+                    English = "Failed to update favorites",
+                },
+                ex
+            );
+        }
+    }
 }
 
 public class CreateOfferDto
@@ -857,6 +952,9 @@ public class OfferDetailsPageDto
     public string ProviderPhoneNumber { get; set; } = string.Empty;
     public string? ProviderProfilePhotoUrl { get; set; } = string.Empty;
     public string ProviderCreatedAt { get; set; }
+    public bool IsFavorite { get; set; }
+    public int NumberOfFavorites { get; set; }
+    public int NumberOfViews { get; set; }
 }
 
 public class CreateCommentDto

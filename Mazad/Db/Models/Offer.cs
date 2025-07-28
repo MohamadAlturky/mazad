@@ -27,6 +27,8 @@ public class Offer : BaseEntity<int>
 
     public int RegionId { get; set; }
     public Region Region { get; set; } = new();
+    public List<Favorite> Favorites { get; set; } = [];
+    public int NumberOfViews { get; set; } = 0;
 }
 
 public class OfferImage : BaseEntity<int>

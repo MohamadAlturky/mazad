@@ -7,6 +7,6 @@ public class Favorite : BaseEntity<int>
     public int UserId { get; set; }
     public int OfferId { get; set; }
 
-    public User User { get; set; } = new();
-    public Offer Offer { get; set; } = new();
+    public User User { get; set; }
+    public Offer Offer { get; set; }
 }
