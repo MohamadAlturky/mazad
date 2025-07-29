@@ -891,6 +891,115 @@ public class CustomerOfferController : BaseController
             );
         }
     }
+
+    [HttpGet("my-favorites")]
+    [Authorize(Policy = "User")]
+    public async Task<IActionResult> GetFavoritesOffers([FromQuery] GetOffersRequestDto request)
+    {
+        bool isArabic = GetLanguage() == "ar";
+        try
+        {
+            var userId = GetUserId();
+
+            // Default limit if not provided or invalid
+            var limit = request.Limit <= 0 ? 10 : Math.Min(request.Limit, 50);
+
+            // Start with the base query
+            var query = _context
+                .Favorites.Include(f => f.Offer)
+                .Include(f => f.Offer.Category)
+                .Include(f => f.Offer.Region)
+                .Where(f =>
+                    f.UserId == userId && !f.IsDeleted && !f.Offer.IsDeleted && f.Offer.IsActive
+                );
+
+            // Apply search term if provided
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                var searchTerm = request.SearchTerm.ToLower();
+                query = query.Where(f =>
+                    f.Offer.Name.ToLower().Contains(searchTerm)
+                    || f.Offer.Description.ToLower().Contains(searchTerm)
+                );
+            }
+
+            // Apply cursor pagination
+            if (request.Cursor.HasValue)
+            {
+                query = request.SortDescending
+                    ? query.Where(f => f.OfferId < request.Cursor) // Get items before cursor for descending order
+                    : query.Where(f => f.OfferId > request.Cursor); // Get items after cursor for ascending order
+            }
+
+            // Apply ordering
+            query = request.SortDescending
+                ? query.OrderByDescending(f => f.OfferId)
+                : query.OrderBy(f => f.OfferId);
+
+            // Execute query with limit
+            var favorites = await query
+                .Take(limit + 1) // Get one extra item to determine if there are more results
+                .Select(f => new OfferPaginatedItemDto
+                {
+                    Id = f.Offer.Id,
+                    Name = f.Offer.Name,
+                    Description = f.Offer.Description,
+                    Price = f.Offer.Price,
+                    CategoryId = f.Offer.CategoryId,
+                    CategoryName = isArabic ? f.Offer.Category.NameAr : f.Offer.Category.NameEn,
+                    RegionId = f.Offer.RegionId,
+                    RegionName = isArabic ? f.Offer.Region.NameArabic : f.Offer.Region.NameEnglish,
+                    MainImageUrl = f.Offer.MainImageUrl,
+                    CreatedAt = f.Offer.CreatedAt,
+                    NumberOfViews = f.Offer.NumberOfViews,
+                    NumberOfFavorites = f.Offer.Favorites.Count,
+                    NumberOfComments = f.Offer.Comments.Count,
+                })
+                .ToListAsync();
+
+            // Check if there are more results
+            var hasMore = favorites.Count > limit;
+            if (hasMore)
+            {
+                favorites.RemoveAt(favorites.Count - 1); // Remove the extra item
+            }
+
+            // Get the next cursor
+            int? nextCursor = favorites.Count > 0 ? favorites[favorites.Count - 1].Id : null;
+
+            var response = new GetOffersResponseDto
+            {
+                Items = favorites,
+                HasMore = hasMore,
+                NextCursor = nextCursor,
+            };
+
+            return Represent(
+                response,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم استرجاع العروض المفضلة بنجاح",
+                    English = "Favorite offers retrieved successfully",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error retrieving favorite offers: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في استرجاع العروض المفضلة",
+                    English = "Failed to retrieve favorite offers",
+                },
+                ex
+            );
+        }
+    }
 }
 
 public class CreateOfferDto
@@ -906,7 +1015,7 @@ public class CreateOfferDto
 public class GetOffersRequestDto
 {
     public int? Cursor { get; set; }
-    public int Limit { get; set; } = 10;
+    public int Limit { get; set; } = 5;
     public bool SortDescending { get; set; } = true;
     public int CategoryId { get; set; }
     public int RegionId { get; set; }
