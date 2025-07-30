@@ -280,6 +280,101 @@ public class UserController : BaseController
         }
     }
 
+    [HttpGet("profile/{userId}")]
+    public async Task<IActionResult> GetUserProfile(int userId)
+    {
+        try
+        {
+            bool isArabic = GetLanguage() == "ar";
+
+            // Get user basic info
+            var user = await _context
+                .Users.Where(u => u.Id == userId && u.UserType == UserType.User)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "المستخدم غير موجود",
+                        English = "User not found",
+                    }
+                );
+            }
+
+            // Get user's offers count
+            var offersCount = await _context.Offers.Where(o => o.ProviderId == userId).CountAsync();
+
+            // Get followers count (users who follow this user)
+            var followersCount = await _context
+                .Followers.Where(f => f.FollowedId == userId)
+                .CountAsync();
+
+            // Get following count (users this user follows)
+            var followingCount = await _context
+                .Followers.Where(f => f.FollowerId == userId)
+                .CountAsync();
+
+            // Get user offers
+            var userOffers = await _context
+                .Offers.Where(o => o.ProviderId == userId)
+                .Include(o => o.Category)
+                .Include(o => o.Region)
+                .Select(o => new OfferDto
+                {
+                    Id = o.Id,
+                    CategoryId = o.CategoryId,
+                    CategoryName = isArabic ? o.Category.NameAr : o.Category.NameEn,
+                    RegionId = o.RegionId,
+                    RegionName = isArabic ? o.Region.NameArabic : o.Region.NameEnglish,
+                    MainImageUrl = o.MainImageUrl,
+                    CreatedAt = o.CreatedAt,
+                    Price = o.Price,
+                    Description = o.Description,
+                    Name = o.Name,
+                })
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+
+            var profileData = new PublicUserProfileDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                PhoneNumber = user.PhoneNumber,
+                ProfilePhotoUrl = user.ProfilePhotoUrl,
+                MemberSince = user.CreatedAt,
+                OffersCount = offersCount,
+                FollowersCount = followersCount,
+                FollowingCount = followingCount,
+                Offers = userOffers,
+            };
+
+            return Represent(
+                profileData,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم جلب معلومات المستخدم بنجاح",
+                    English = "User profile retrieved successfully",
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في جلب معلومات المستخدم",
+                    English = "Failed to retrieve user profile",
+                },
+                ex
+            );
+        }
+    }
+
     [HttpGet("search")]
     [Authorize(Policy = "Admin")]
     public async Task<IActionResult> SearchUsers([FromQuery] SearchUsersDto request)
@@ -405,4 +500,17 @@ public class OfferDto
     public string RegionName { get; set; } = string.Empty;
     public string MainImageUrl { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+}
+
+public class PublicUserProfileDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string? ProfilePhotoUrl { get; set; }
+    public DateTime MemberSince { get; set; }
+    public int OffersCount { get; set; }
+    public int FollowersCount { get; set; }
+    public int FollowingCount { get; set; }
+    public List<OfferDto> Offers { get; set; } = new();
 }

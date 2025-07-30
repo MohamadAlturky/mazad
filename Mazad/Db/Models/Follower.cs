@@ -9,6 +9,6 @@ public class Follower : BaseEntity<int>
     public int FollowerId { get; set; }
     public int FollowedId { get; set; }
 
-    public User TheFollower { get; set; } = new();
-    public User TheFollowed { get; set; } = new();
+    public User TheFollower { get; set; } = null!;
+    public User TheFollowed { get; set; } = null!;
 }

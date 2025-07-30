@@ -58,6 +58,9 @@ public class CustomerOfferController : BaseController
                     IsFavorite = o.Favorites.Any(f => f.UserId == GetUserId()),
                     NumberOfFavorites = o.Favorites.Count,
                     NumberOfViews = o.NumberOfViews,
+                    ProviderIsFollowed = _context.Followers.Any(f =>
+                        f.FollowerId == GetUserId() && f.FollowedId == o.ProviderId
+                    ),
                 })
                 .FirstOrDefaultAsync();
 
@@ -120,26 +123,26 @@ public class CustomerOfferController : BaseController
                 .Where(o => !o.IsDeleted && o.IsActive);
 
             // Apply category filter if provided
-            if (request.CategoryId > 0)
+            if (request.CategoryId.HasValue && request.CategoryId > 0)
             {
                 query = query.Where(o => o.CategoryId == request.CategoryId);
             }
 
             // Apply region filter if provided
-            if (request.RegionId > 0)
+            if (request.RegionId.HasValue && request.RegionId > 0)
             {
                 query = query.Where(o => o.RegionId == request.RegionId);
             }
 
             // Apply price range filter if provided
-            if (request.MinPrice > 0)
+            if (request.MinPrice.HasValue && request.MinPrice > 0)
             {
-                query = query.Where(o => o.Price >= request.MinPrice);
+                query = query.Where(o => o.Price >= request.MinPrice.Value);
             }
 
-            if (request.MaxPrice > 0)
+            if (request.MaxPrice.HasValue && request.MaxPrice > 0)
             {
-                query = query.Where(o => o.Price <= request.MaxPrice);
+                query = query.Where(o => o.Price <= request.MaxPrice.Value);
             }
 
             // Apply search term if provided
@@ -1017,10 +1020,10 @@ public class GetOffersRequestDto
     public int? Cursor { get; set; }
     public int Limit { get; set; } = 5;
     public bool SortDescending { get; set; } = true;
-    public int CategoryId { get; set; }
-    public int RegionId { get; set; }
-    public double MinPrice { get; set; }
-    public double MaxPrice { get; set; }
+    public int? CategoryId { get; set; }
+    public int? RegionId { get; set; }
+    public double? MinPrice { get; set; }
+    public double? MaxPrice { get; set; }
     public string? SearchTerm { get; set; }
 }
 
@@ -1070,6 +1073,7 @@ public class OfferDetailsPageDto
     public bool IsFavorite { get; set; }
     public int NumberOfFavorites { get; set; }
     public int NumberOfViews { get; set; }
+    public required bool ProviderIsFollowed { get; set; }
 }
 
 public class CreateCommentDto

@@ -256,13 +256,13 @@ public class SharedCategoyController : BaseController
             var isArabic = currentLanguage == "ar";
             var categories = await _context
                 .Categories.Include(c => c.SubCategories)
+                .ThenInclude(sc => sc.Offers.Where(o => !o.IsDeleted && o.IsActive))
                 .Where(c => !c.IsDeleted && c.IsActive)
                 .Where(c => c.ParentId == null)
                 .Select(c => new CustomerCategoryDto
                 {
                     Id = c.Id,
                     Name = isArabic ? c.NameAr : c.NameEn,
-                    // Description = isArabic ? c.DescriptionAr : c.DescriptionEn,
                     ImageUrl = c.ImageUrl,
                     NumberOfOffers = c.Offers.Count,
                     SubCategories = c
@@ -270,7 +270,6 @@ public class SharedCategoyController : BaseController
                         {
                             Id = sc.Id,
                             Name = isArabic ? sc.NameAr : sc.NameEn,
-                            // Description = isArabic ? sc.DescriptionAr : sc.DescriptionEn,
                             ImageUrl = sc.ImageUrl,
                             NumberOfOffers = sc.Offers.Count,
                         })
@@ -279,7 +278,10 @@ public class SharedCategoyController : BaseController
                 .OrderByDescending(c => c.NumberOfOffers)
                 .ThenBy(c => c.Id)
                 .ToListAsync();
-
+            categories.ForEach(c =>
+            {
+                c.NumberOfOffers = c.SubCategories.Sum(sc => sc.NumberOfOffers);
+            });
             return Represent(
                 categories,
                 true,
@@ -309,8 +311,6 @@ public class CustomerCategoryDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-
-    // public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public int NumberOfOffers { get; set; }
     public List<CustomerCategoryDto> SubCategories { get; set; } = [];

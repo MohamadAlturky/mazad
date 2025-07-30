@@ -38,6 +38,12 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
             .WithOne(f => f.Offer)
             .HasForeignKey(f => f.OfferId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .HasOne(o => o.Category)
+            .WithMany(c => c.Offers)
+            .HasForeignKey(o => o.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
