@@ -1,6 +1,6 @@
 
 # Migration
-C:\Users\ASUS\.dotnet\tools\dotnet-ef migrations add AddingComments --context MazadDbContext --project ..\Mazad.Core\Mazad.Core.csproj --startup-project .\Mazad.Api.csproj
+C:\Users\ASUS\.dotnet\tools\dotnet-ef migrations add AddingNotifications --context MazadDbContext --project ..\Mazad.Core\Mazad.Core.csproj --startup-project .\Mazad.Api.csproj
 
 # Update Db
 C:\Users\ASUS\.dotnet\tools\dotnet-ef database update --context MazadDbContext --project ..\Mazad.Core\Mazad.Core.csproj --startup-project .\Mazad.Api.csproj
