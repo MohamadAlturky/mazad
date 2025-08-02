@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Mazad.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/Notification")]
 public class NotificationController : BaseController
 {
     private readonly MazadDbContext _context;
