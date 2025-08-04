@@ -6,6 +6,7 @@ using Mazad.Core.Shared;
 using Mazad.Core.Shared.Contexts;
 using Mazad.Core.Shared.Interfaces;
 using Mazad.Services;
+using Mazad.Services.Seeding;
 using Mazad.UseCases.UsersDomain.Otp;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -147,6 +148,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
 var app = builder.Build();
+
+await AdminUserSeeder.SeedAdminUserAsync(app);
 
 if (app.Environment.IsDevelopment())
 {

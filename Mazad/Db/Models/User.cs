@@ -21,6 +21,8 @@ public class User : BaseEntity<int>
 
     [MaxLength(500)]
     public string? Email { get; set; }
+
+    public bool IsActive { get; set; } = true;
 }
 
 public enum UserType
