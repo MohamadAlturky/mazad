@@ -151,11 +151,11 @@ var app = builder.Build();
 
 await AdminUserSeeder.SeedAdminUserAsync(app);
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+app.UseSwagger();
+app.UseSwaggerUI();
+//}
 
 // Order is important for middleware
 app.UseMiddleware<DelayMiddleware>();
