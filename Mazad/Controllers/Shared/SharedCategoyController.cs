@@ -305,6 +305,110 @@ public class SharedCategoyController : BaseController
             );
         }
     }
+
+    [HttpGet("base-categories-dropdown")]
+    public async Task<IActionResult> GetBaseCategoriesDropdown()
+    {
+        try
+        {
+            var currentLanguage = GetLanguage();
+            var isArabic = currentLanguage == "ar";
+            
+            var baseCategories = await _context
+                .Categories
+                .Where(c => !c.IsDeleted && c.IsActive && c.ParentId == null)
+                .OrderBy(c => isArabic ? c.NameAr : c.NameEn)
+                .Select(c => new CategoryDropdownDto
+                {
+                    Id = c.Id,
+                    Name = isArabic ? c.NameAr : c.NameEn
+                })
+                .ToListAsync();
+
+            return Represent(
+                baseCategories,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم جلب الفئات الأساسية بنجاح",
+                    English = "Base categories retrieved successfully"
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في جلب الفئات الأساسية",
+                    English = "Failed to retrieve base categories"
+                },
+                ex
+            );
+        }
+    }
+
+    [HttpGet("{categoryId}/subcategories-dropdown")]
+    public async Task<IActionResult> GetSubcategoriesDropdown(int categoryId)
+    {
+        try
+        {
+            var currentLanguage = GetLanguage();
+            var isArabic = currentLanguage == "ar";
+
+            // Check if the parent category exists and is active
+            var parentCategory = await _context.Categories.FirstOrDefaultAsync(c =>
+                c.Id == categoryId && !c.IsDeleted && c.IsActive
+            );
+
+            if (parentCategory == null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "الفئة الأساسية غير موجودة أو غير نشطة",
+                        English = "Parent category not found or inactive"
+                    }
+                );
+            }
+
+            // Get subcategories for dropdown
+            var subcategories = await _context
+                .Categories
+                .Where(c => c.ParentId == categoryId && !c.IsDeleted && c.IsActive)
+                .OrderBy(c => isArabic ? c.NameAr : c.NameEn)
+                .Select(c => new CategoryDropdownDto
+                {
+                    Id = c.Id,
+                    Name = isArabic ? c.NameAr : c.NameEn
+                })
+                .ToListAsync();
+
+            return Represent(
+                subcategories,
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم جلب الفئات الفرعية بنجاح",
+                    English = "Subcategories retrieved successfully"
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في جلب الفئات الفرعية",
+                    English = "Failed to retrieve subcategories"
+                },
+                ex
+            );
+        }
+    }
 }
 
 public class CustomerCategoryDto
@@ -348,4 +452,10 @@ public class GetCategoryTreeDto
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 10;
     public string? SearchTerm { get; set; }
+}
+
+public class CategoryDropdownDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

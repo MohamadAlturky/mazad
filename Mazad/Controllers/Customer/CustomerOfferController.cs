@@ -1003,6 +1003,76 @@ public class CustomerOfferController : BaseController
             );
         }
     }
+
+    [HttpDelete("{offerId}")]
+    [Authorize(Policy = "User")]
+    public async Task<IActionResult> SoftDeleteOffer(int offerId)
+    {
+        try
+        {
+            var userId = GetUserId();
+
+            // Find the offer and validate it exists and is not already deleted
+            var offer = await _context.Offers.FirstOrDefaultAsync(o => 
+                o.Id == offerId && !o.IsDeleted);
+
+            if (offer == null)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "العرض غير موجود",
+                        English = "Offer not found"
+                    }
+                );
+            }
+
+            // Validate that the current user is the owner of the offer
+            if (offer.ProviderId != userId)
+            {
+                return Represent(
+                    false,
+                    new LocalizedMessage
+                    {
+                        Arabic = "ليس لديك صلاحية لحذف هذا العرض",
+                        English = "You don't have permission to delete this offer"
+                    }
+                );
+            }
+
+            // Perform soft delete
+            offer.IsDeleted = true;
+            offer.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Represent(
+                new { Id = offer.Id, Name = offer.Name },
+                true,
+                new LocalizedMessage
+                {
+                    Arabic = "تم حذف العرض بنجاح",
+                    English = "Offer deleted successfully"
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting offer: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+            return Represent(
+                false,
+                new LocalizedMessage
+                {
+                    Arabic = "فشل في حذف العرض",
+                    English = "Failed to delete offer"
+                },
+                ex
+            );
+        }
+    }
 }
 
 public class CreateOfferDto
