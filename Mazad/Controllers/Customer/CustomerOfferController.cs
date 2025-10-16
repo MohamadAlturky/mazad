@@ -118,14 +118,14 @@ public class CustomerOfferController : BaseController
             // Start with the base query
             var query = _context
                 .Set<Offer>()
-                .Include(o => o.Category)
+                .Include(o => o.Category).ThenInclude(c => c.ParentCategory)
                 .Include(o => o.Region)
                 .Where(o => !o.IsDeleted && o.IsActive);
 
             // Apply category filter if provided
             if (request.CategoryId.HasValue && request.CategoryId > 0)
             {
-                query = query.Where(o => o.CategoryId == request.CategoryId);
+                query = query.Where(o => o.CategoryId == request.CategoryId || o.Category.ParentId == request.CategoryId);
             }
 
             // Apply region filter if provided
