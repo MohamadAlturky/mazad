@@ -19,6 +19,15 @@ public class SharedRegionController : BaseController
     {
         _context = context;
     }
+    [HttpGet("hello-world")]
+    public IActionResult HelloWorld()
+    {
+        return Represent(
+            "Hello World",
+            true,
+            new LocalizedMessage { Arabic = "مرحبا بالعالم", English = "Hello World" }
+        );
+    }
 
     [HttpGet("tree")]
     public async Task<IActionResult> GetRegionTree([FromQuery] GetRegionTreeDto request)
